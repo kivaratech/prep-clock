@@ -1,0 +1,16 @@
+{
+  "name": "Shelf Life Timer",
+  "short_name": "TimerBoard",
+  "description": "Offline-first shelf life timer board for Android tablet",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#121212",
+  "icons": [
+    {
+      "src": "https://cdn.replit.com/images/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}

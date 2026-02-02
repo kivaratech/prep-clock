@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Shelf Life Timer Board</title>
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#121212" />
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <h1>Timer Board</h1>
+        <button id="admin-toggle" aria-label="Settings">⚙️</button>
+      </header>
+      
+      <main id="timer-grid" class="grid"></main>
+
+      <div id="admin-screen" class="hidden">
+        <div class="admin-content">
+          <header>
+            <h2>Settings</h2>
+            <button id="admin-close">Close</button>
+          </header>
+          
+          <section class="global-settings">
+            <label>
+              Warning Threshold (min):
+              <input type="number" id="warning-threshold" min="1" />
+            </label>
+          </section>
+
+          <section class="item-editor">
+            <h3>Add/Edit Item</h3>
+            <form id="item-form">
+              <input type="hidden" id="edit-id" />
+              <input type="text" id="item-name" placeholder="Item Name" required />
+              <input type="number" id="item-duration" placeholder="Minutes" required />
+              <button type="submit">Save Item</button>
+            </form>
+          </section>
+
+          <section class="item-list">
+            <h3>Current Items</h3>
+            <ul id="items-ul"></ul>
+          </section>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/main.js"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js');
+        });
+      }
+    </script>
+  </body>
+</html>
