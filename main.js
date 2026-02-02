@@ -16,11 +16,7 @@ const DEFAULT_ITEMS = [
   { name: 'Pickle', duration: 720 },
   { name: 'Towel Bucket', duration: 240 },
   { name: 'Onions Shaker', duration: 240 },
-].map(item => ({ 
-  ...item, 
-  id: nanoid(), 
-  expiresAt: Date.now() + (item.duration * 60000) 
-}));
+].map(item => ({ ...item, id: nanoid(), startTime: Date.now() }));
 
 let state = JSON.parse(localStorage.getItem('timer_state')) || {
   items: DEFAULT_ITEMS,
@@ -42,11 +38,11 @@ const warningInput = document.getElementById('warning-threshold');
 
 // --- Timer Logic ---
 function formatTime(ms) {
-  if (ms <= 0) return 'EXPIRED';
   const totalMin = Math.ceil(ms / 60000);
+  if (ms <= 0) return 'EXPIRED';
   const h = Math.floor(totalMin / 60);
   const m = totalMin % 60;
-  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+  return `${h}h ${m}m`;
 }
 
 function updateTimers() {
@@ -54,7 +50,9 @@ function updateTimers() {
   grid.innerHTML = '';
   
   state.items.forEach(item => {
-    const remainingMs = item.expiresAt - now;
+    const elapsedMs = now - item.startTime;
+    const durationMs = item.duration * 60000;
+    const remainingMs = durationMs - elapsedMs;
     
     let stateClass = 'state-normal';
     if (remainingMs <= 0) {
@@ -70,7 +68,7 @@ function updateTimers() {
       <div class="tile-time">${formatTime(remainingMs)}</div>
     `;
     tile.onclick = () => {
-      item.expiresAt = Date.now() + (item.duration * 60000);
+      item.startTime = Date.now();
       saveState();
       updateTimers();
     };
@@ -118,15 +116,13 @@ itemForm.onsubmit = (e) => {
     if (item) {
       item.name = name;
       item.duration = duration;
-      // Optionally reset timer on edit
-      item.expiresAt = Date.now() + (duration * 60000);
     }
   } else {
     state.items.push({
       id: nanoid(),
       name,
       duration,
-      expiresAt: Date.now() + (duration * 60000)
+      startTime: Date.now()
     });
   }
 
@@ -155,5 +151,5 @@ itemsUl.onclick = (e) => {
 };
 
 // --- Init ---
-setInterval(updateTimers, 1000); // Update every second
+setInterval(updateTimers, 10000); // Update every 10s
 updateTimers();
