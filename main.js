@@ -13,7 +13,7 @@ const DEFAULT_ITEMS = [
   { name: 'Crinkle Pickles', duration: 240 },
   { name: 'Bacon', duration: 240 },
   { name: 'Butter', duration: 240 },
-  { name: 'Pickle', 720 },
+  { name: 'Pickle', duration: 720 },
   { name: 'Towel Bucket', duration: 240 },
   { name: 'Onions Shaker', duration: 240 },
 ].map(item => ({ ...item, id: nanoid(), startTime: Date.now() }));
