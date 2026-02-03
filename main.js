@@ -13,15 +13,21 @@ const DEFAULT_ITEMS = [
   { name: 'Crinkle Pickles', duration: 240 },
   { name: 'Bacon', duration: 240 },
   { name: 'Butter', duration: 240 },
-  { name: 'Pickle', 720 },
+  { name: 'Pickle', duration: 720 },
   { name: 'Towel Bucket', duration: 240 },
   { name: 'Onions Shaker', duration: 240 },
 ].map(item => ({ ...item, id: nanoid(), startTime: Date.now() }));
 
-let state = JSON.parse(localStorage.getItem('timer_state')) || {
-  items: DEFAULT_ITEMS,
-  warningThreshold: 15
-};
+let state = JSON.parse(localStorage.getItem('timer_state'));
+
+// If no state or state items are empty, initialize with defaults
+if (!state || !state.items || state.items.length === 0) {
+  state = {
+    items: DEFAULT_ITEMS,
+    warningThreshold: 15
+  };
+  localStorage.setItem('timer_state', JSON.stringify(state));
+}
 
 function saveState() {
   localStorage.setItem('timer_state', JSON.stringify(state));
