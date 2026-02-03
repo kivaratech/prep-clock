@@ -104,7 +104,10 @@ adminToggle.onclick = () => {
   renderAdminItems();
 };
 
-adminClose.onclick = () => adminScreen.classList.add('hidden');
+adminClose.onclick = (e) => {
+  e.preventDefault();
+  adminScreen.classList.add('hidden');
+};
 
 warningInput.onchange = (e) => {
   state.warningThreshold = parseInt(e.target.value) || 15;
