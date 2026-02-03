@@ -160,5 +160,9 @@ itemsUl.onclick = (e) => {
 };
 
 // --- Init ---
-setInterval(updateTimers, 10000); // Update every 10s
-updateTimers();
+if (grid) {
+  setInterval(updateTimers, 10000); // Update every 10s
+  updateTimers();
+} else {
+  console.error("Timer grid element not found");
+}
