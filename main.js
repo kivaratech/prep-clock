@@ -264,10 +264,13 @@ if (itemsUl) {
   itemsUl.addEventListener('click', (e) => {
     const id = e.target.dataset.id;
     if (e.target.classList.contains('btn-delete')) {
-      state.items = state.items.filter(item => item.id !== id);
-      saveState();
-      renderAdminItems();
-      updateTimers();
+      const item = state.items.find(i => i.id === id);
+      if (confirm(`Are you sure you want to delete "${item.name}"?`)) {
+        state.items = state.items.filter(item => item.id !== id);
+        saveState();
+        renderAdminItems();
+        updateTimers();
+      }
     } else if (e.target.classList.contains('btn-edit')) {
       const formContainer = document.getElementById(`edit-form-${id}`);
       const isHidden = formContainer.classList.contains('hidden');
