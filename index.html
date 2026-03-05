@@ -35,7 +35,10 @@
             <form id="item-form">
               <input type="hidden" id="edit-id" />
               <input type="text" id="item-name" placeholder="Item Name" required />
-              <input type="number" id="item-duration" placeholder="Minutes" required />
+              <div class="duration-inputs">
+                <input type="number" id="item-hours" placeholder="Hours" min="0" value="0" />
+                <input type="number" id="item-minutes" placeholder="Minutes" min="0" required />
+              </div>
               <select id="item-category" required></select>
               <label class="checkbox-label">
                 <input type="checkbox" id="item-has-side2" /> Enable Side 2

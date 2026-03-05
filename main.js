@@ -222,9 +222,11 @@ function renderAdminItems() {
     const li = document.createElement('li');
     li.className = 'admin-item-row';
     li.dataset.id = item.id;
+    const h = Math.floor(item.duration / 60);
+    const m = item.duration % 60;
     li.innerHTML = `
       <div class="admin-item-display">
-        <span>${item.name} (${item.duration}m) [${item.category}]</span>
+        <span>${item.name} (${h > 0 ? h + 'h ' : ''}${m}m) [${item.category}]</span>
         <div class="item-actions">
           <button class="btn-edit" data-id="${item.id}">Edit</button>
           <button class="btn-delete" data-id="${item.id}">Delete</button>
@@ -233,7 +235,10 @@ function renderAdminItems() {
       <div class="inline-edit-form hidden" id="edit-form-${item.id}">
         <form class="inline-form">
           <input type="text" class="edit-name" value="${item.name}" required />
-          <input type="number" class="edit-duration" value="${item.duration}" required />
+          <div class="duration-inputs">
+            <input type="number" class="edit-hours" value="${h}" min="0" placeholder="Hours" />
+            <input type="number" class="edit-minutes" value="${m}" min="0" required placeholder="Minutes" />
+          </div>
           <select class="edit-category" required></select>
           <label class="checkbox-label">
             <input type="checkbox" class="edit-side2" ${item.hasSide2 ? 'checked' : ''} /> Side 2
@@ -299,7 +304,9 @@ if (itemsUl) {
       const id = li.dataset.id;
       const item = state.items.find(i => i.id === id);
       item.name = e.target.querySelector('.edit-name').value;
-      item.duration = parseInt(e.target.querySelector('.edit-duration').value);
+      const hours = parseInt(e.target.querySelector('.edit-hours').value) || 0;
+      const minutes = parseInt(e.target.querySelector('.edit-minutes').value) || 0;
+      item.duration = (hours * 60) + minutes;
       item.category = e.target.querySelector('.edit-category').value;
       item.hasSide2 = e.target.querySelector('.edit-side2').checked;
       if (!item.side1.isRunning) item.side1.remainingMs = item.duration * 60000;
@@ -314,7 +321,9 @@ if (itemForm) {
     e.preventDefault();
     const id = document.getElementById('edit-id').value;
     const name = document.getElementById('item-name').value;
-    const duration = parseInt(document.getElementById('item-duration').value);
+    const hours = parseInt(document.getElementById('item-hours').value) || 0;
+    const minutes = parseInt(document.getElementById('item-minutes').value) || 0;
+    const duration = (hours * 60) + minutes;
     const hasSide2 = document.getElementById('item-has-side2').checked;
     const category = document.getElementById('item-category').value;
 
