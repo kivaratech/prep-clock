@@ -1,185 +1,321 @@
 <!DOCTYPE html>
   <html lang="en">
-    <head>
-      <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
       <title>Shelf Life Timer Board</title>
       <style>
-        :root {
-          --bg-color: #121212;
-          --card-bg: #1e1e1e;
-          --text-color: #ffffff;
-          --primary-color: #4caf50;
-          --warning-color: #ff9800;
-          --expired-color: #f44336;
-          --header-height: 60px;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        body {
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-          background-color: var(--bg-color);
-          color: var(--text-color);
-          user-select: none;
-          overflow-x: hidden;
-        }
-        header {
-          height: var(--header-height);
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 0 20px;
-          background: #000;
-          position: sticky;
-          top: 0;
-          z-index: 10;
-        }
-        #admin-toggle { background: none; border: none; font-size: 24px; cursor: pointer; padding: 10px; color: white; }
-        .grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 15px;
-          padding: 15px;
-        }
-        .tile {
-          background: var(--card-bg);
-          aspect-ratio: 16 / 9;
-          border-radius: 12px;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-          text-align: center;
-          padding: 10px;
-          border: 4px solid transparent;
-          cursor: pointer;
-        }
-        .tile.state-normal { border-color: var(--primary-color); }
-        .tile.state-warning { border-color: var(--warning-color); }
-        .tile.state-expired { border-color: var(--expired-color); background-color: #400; }
-        .tile-name { font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; }
-        .tile-time { font-size: 1.5rem; font-family: monospace; }
-        #admin-screen {
-          position: fixed;
-          top: 0; left: 0; width: 100%; height: 100%;
-          background: rgba(0,0,0,0.9);
-          z-index: 100;
-          display: none;
-          justify-content: center;
-          padding-top: 20px;
-          overflow-y: auto;
-        }
-        .admin-content { width: 90%; max-width: 600px; background: #222; padding: 20px; border-radius: 12px; }
-        .hidden { display: none; }
-        input { width: 100%; padding: 10px; margin: 5px 0; background: #333; border: 1px solid #444; color: white; }
-        button { padding: 10px 20px; background: var(--primary-color); color: white; border: none; border-radius: 4px; cursor: pointer; }
-        #admin-close { background: #555; }
-        ul { list-style: none; margin-top: 20px; }
-        li { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #333; }
+          :root {
+              --bg-color: #121212;
+              --card-bg: #1e1e1e;
+              --text-color: #ffffff;
+              --primary-color: #4caf50;
+              --warning-color: #ff9800;
+              --expired-color: #f44336;
+              --header-height: 60px;
+          }
+          * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+          body {
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+              background-color: var(--bg-color);
+              color: var(--text-color);
+              user-select: none;
+              overflow-x: hidden;
+              min-height: 100vh;
+          }
+          header {
+              height: var(--header-height);
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              padding: 0 20px;
+              background: #000;
+              position: sticky;
+              top: 0;
+              z-index: 10;
+          }
+          h1 { font-size: 1.5rem; }
+          #admin-toggle { background: none; border: none; font-size: 24px; cursor: pointer; padding: 10px; color: white; }
+          
+          .grid {
+              display: grid;
+              grid-template-columns: repeat(2, 1fr);
+              gap: 15px;
+              padding: 15px;
+          }
+          
+          .tile {
+              background: var(--card-bg);
+              aspect-ratio: 16 / 9;
+              border-radius: 12px;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              align-items: center;
+              text-align: center;
+              padding: 10px;
+              border: 4px solid transparent;
+              cursor: pointer;
+              transition: background-color 0.2s;
+          }
+          
+          .tile.state-normal { border-color: var(--primary-color); }
+          .tile.state-warning { border-color: var(--warning-color); }
+          .tile.state-expired { border-color: var(--expired-color); background-color: #400; }
+          
+          .tile-name { font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; pointer-events: none; }
+          .tile-time { font-size: 1.5rem; font-family: monospace; pointer-events: none; }
+          
+          #admin-screen {
+              position: fixed;
+              top: 0; left: 0; width: 100%; height: 100%;
+              background: rgba(0,0,0,0.95);
+              z-index: 100;
+              display: none; /* Controlled by JS */
+              justify-content: center;
+              padding-top: 20px;
+              overflow-y: auto;
+          }
+          
+          .admin-content { 
+              width: 90%; 
+              max-width: 600px; 
+              background: #222; 
+              padding: 20px; 
+              border-radius: 12px;
+              margin-bottom: 40px;
+          }
+          
+          section { margin-bottom: 25px; }
+          h2, h3 { margin-bottom: 15px; }
+          
+          label { display: block; margin-bottom: 5px; }
+          input { 
+              width: 100%; 
+              padding: 12px; 
+              margin-bottom: 15px; 
+              background: #333; 
+              border: 1px solid #444; 
+              color: white; 
+              border-radius: 6px;
+              font-size: 1rem;
+          }
+          
+          .btn {
+              padding: 12px 20px;
+              border: none;
+              border-radius: 6px;
+              cursor: pointer;
+              font-size: 1rem;
+              font-weight: bold;
+              color: white;
+          }
+          
+          .btn-primary { background: var(--primary-color); }
+          .btn-secondary { background: #555; }
+          .btn-danger { background: var(--expired-color); padding: 6px 12px; font-size: 0.8rem; }
+          
+          ul { list-style: none; margin-top: 20px; }
+          li { 
+              display: flex; 
+              justify-content: space-between; 
+              align-items: center;
+              padding: 12px; 
+              border-bottom: 1px solid #333; 
+          }
+
+          .hidden { display: none !important; }
       </style>
-    </head>
-    <body>
+  </head>
+  <body>
       <header>
-        <h1>Timer Board</h1>
-        <button id="admin-toggle">⚙️</button>
+          <h1>Timer Board</h1>
+          <button id="admin-toggle" type="button">⚙️</button>
       </header>
+
       <main id="timer-grid" class="grid"></main>
+
       <div id="admin-screen">
-        <div class="admin-content">
-          <header style="background:none; position:static; padding:0; margin-bottom:20px;">
-            <h2>Settings</h2>
-            <button id="admin-close">Close</button>
-          </header>
-          <section>
-            <label>Warning Threshold (min): <input type="number" id="warning-threshold"></label>
-          </section>
-          <section style="margin-top:20px;">
-            <h3>Add Item</h3>
-            <form id="item-form">
-              <input type="hidden" id="edit-id">
-              <input type="text" id="item-name" placeholder="Name" required>
-              <input type="number" id="item-duration" placeholder="Minutes" required>
-              <button type="submit">Save</button>
-            </form>
-          </section>
-          <ul id="items-ul"></ul>
-        </div>
+          <div class="admin-content">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                  <h2>Settings</h2>
+                  <button id="admin-close" class="btn btn-secondary" type="button">Close</button>
+              </div>
+              
+              <section>
+                  <label for="warning-threshold">Warning Threshold (minutes before expire):</label>
+                  <input type="number" id="warning-threshold" min="1">
+              </section>
+              
+              <section>
+                  <h3>Add New Item</h3>
+                  <form id="item-form">
+                      <input type="text" id="item-name" placeholder="Item Name (e.g. Tomato)" required>
+                      <input type="number" id="item-duration" placeholder="Duration in Minutes" required>
+                      <button type="submit" class="btn btn-primary" style="width:100%">Add to Board</button>
+                  </form>
+              </section>
+              
+              <section>
+                  <h3>Manage Items</h3>
+                  <ul id="items-ul"></ul>
+              </section>
+          </div>
       </div>
+
       <script>
-        const nanoid = () => Math.random().toString(36).substring(2, 11);
-        const DEFAULT_ITEMS = [
-          { name: 'Travel Path', duration: 60 },
-          { name: 'Hand Wash', duration: 60 },
-          { name: 'Onions Slivered', duration: 30 },
-          { name: 'Tomato', duration: 240 },
-          { name: 'Shredded Chz', duration: 240 },
-          { name: 'Lettuce - Shred', duration: 240 },
-          { name: 'Utensil Wash', duration: 240 },
-          { name: 'Crinkle Pickles', duration: 240 },
-          { name: 'Bacon', duration: 240 },
-          { name: 'Butter', duration: 240 },
-          { name: 'Pickle', duration: 720 },
-          { name: 'Towel Bucket', duration: 240 },
-          { name: 'Onions Shaker', duration: 240 },
-        ];
+          // Use a simple random ID generator
+          const generateId = () => Math.random().toString(36).substring(2, 11);
 
-        let state = JSON.parse(localStorage.getItem('timer_state')) || {
-          items: DEFAULT_ITEMS.map(i => ({ ...i, id: nanoid(), startTime: Date.now() })),
-          warningThreshold: 15
-        };
+          const DEFAULT_ITEMS = [
+              { name: 'Travel Path', duration: 60 },
+              { name: 'Hand Wash', duration: 60 },
+              { name: 'Onions Slivered', duration: 30 },
+              { name: 'Tomato', duration: 240 },
+              { name: 'Shredded Chz', duration: 240 },
+              { name: 'Lettuce - Shred', duration: 240 },
+              { name: 'Utensil Wash', duration: 240 },
+              { name: 'Crinkle Pickles', duration: 240 },
+              { name: 'Bacon', duration: 240 },
+              { name: 'Butter', duration: 240 },
+              { name: 'Pickle', duration: 720 },
+              { name: 'Towel Bucket', duration: 240 },
+              { name: 'Onions Shaker', duration: 240 }
+          ];
 
-        const save = () => localStorage.setItem('timer_state', JSON.stringify(state));
+          // Initialize state
+          let state;
+          try {
+              const saved = localStorage.getItem('shelf_timer_v1');
+              state = saved ? JSON.parse(saved) : null;
+          } catch (e) {
+              console.error("Storage error", e);
+          }
 
-        function format(ms) {
-          if (ms <= 0) return 'EXPIRED';
-          const totalMin = Math.ceil(ms / 60000);
-          return `${Math.floor(totalMin / 60)}h ${totalMin % 60}m`;
-        }
+          if (!state || !state.items || state.items.length === 0) {
+              state = {
+                  items: DEFAULT_ITEMS.map(item => ({
+                      ...item,
+                      id: generateId(),
+                      startTime: Date.now()
+                  })),
+                  warningThreshold: 15
+              };
+              localStorage.setItem('shelf_timer_v1', JSON.stringify(state));
+          }
 
-        function update() {
-          const grid = document.getElementById('timer-grid');
-          if (!grid) return;
-          grid.innerHTML = '';
-          const now = Date.now();
-          state.items.forEach(item => {
-            const remaining = (item.duration * 60000) - (now - item.startTime);
-            const tile = document.createElement('div');
-            tile.className = 'tile ' + (remaining <= 0 ? 'state-expired' : (remaining <= state.warningThreshold * 60000 ? 'state-warning' : 'state-normal'));
-            tile.innerHTML = `<div class="tile-name">${item.name}</div><div class="tile-time">${format(remaining)}</div>`;
-            tile.onclick = () => { item.startTime = Date.now(); save(); update(); };
-            grid.appendChild(tile);
-          });
-        }
+          const saveState = () => {
+              localStorage.setItem('shelf_timer_v1', JSON.stringify(state));
+          };
 
-        function renderAdmin() {
-          const ul = document.getElementById('items-ul');
-          ul.innerHTML = '';
-          state.items.forEach(item => {
-            const li = document.createElement('li');
-            li.innerHTML = `<span>${item.name} (${item.duration}m)</span><button onclick="deleteItem('${item.id}')">Delete</button>`;
-            ul.appendChild(li);
-          });
-        }
+          function formatTime(ms) {
+              if (ms <= 0) return 'EXPIRED';
+              const totalSeconds = Math.floor(ms / 1000);
+              const totalMinutes = Math.ceil(totalSeconds / 60);
+              const h = Math.floor(totalMinutes / 60);
+              const m = totalMinutes % 60;
+              return `${h}h ${m}m`;
+          }
 
-        window.deleteItem = (id) => {
-          state.items = state.items.filter(i => i.id !== id);
-          save(); renderAdmin(); update();
-        };
+          function updateGrid() {
+              const grid = document.getElementById('timer-grid');
+              if (!grid) return;
+              
+              const now = Date.now();
+              let html = '';
+              
+              state.items.forEach(item => {
+                  const durationMs = item.duration * 60000;
+                  const remainingMs = durationMs - (now - item.startTime);
+                  
+                  let stateClass = 'state-normal';
+                  if (remainingMs <= 0) {
+                      stateClass = 'state-expired';
+                  } else if (remainingMs <= (state.warningThreshold * 60000)) {
+                      stateClass = 'state-warning';
+                  }
+                  
+                  html += `
+                      <div class="tile ${stateClass}" data-id="${item.id}">
+                          <div class="tile-name">${item.name}</div>
+                          <div class="tile-time">${formatTime(remainingMs)}</div>
+                      </div>
+                  `;
+              });
+              
+              grid.innerHTML = html;
+              
+              // Re-attach click listeners
+              document.querySelectorAll('.tile').forEach(tile => {
+                  tile.onclick = () => {
+                      const id = tile.getAttribute('data-id');
+                      const item = state.items.find(i => i.id === id);
+                      if (item) {
+                          item.startTime = Date.now();
+                          saveState();
+                          updateGrid();
+                      }
+                  };
+              });
+          }
 
-        document.getElementById('admin-toggle').onclick = () => {
-          document.getElementById('admin-screen').style.display = 'flex';
-          document.getElementById('warning-threshold').value = state.warningThreshold;
-          renderAdmin();
-        };
-        document.getElementById('admin-close').onclick = () => document.getElementById('admin-screen').style.display = 'none';
-        document.getElementById('warning-threshold').onchange = (e) => { state.warningThreshold = parseInt(e.target.value); save(); };
-        document.getElementById('item-form').onsubmit = (e) => {
-          e.preventDefault();
-          state.items.push({ id: nanoid(), name: document.getElementById('item-name').value, duration: parseInt(document.getElementById('item-duration').value), startTime: Date.now() });
-          e.target.reset(); save(); renderAdmin(); update();
-        };
+          function renderAdminList() {
+              const ul = document.getElementById('items-ul');
+              if (!ul) return;
+              
+              ul.innerHTML = state.items.map(item => `
+                  <li>
+                      <span>${item.name} (${item.duration}m)</span>
+                      <button class="btn btn-danger" onclick="deleteItem('${item.id}')">Delete</button>
+                  </li>
+              `).join('');
+          }
 
-        setInterval(update, 1000);
-        update();
+          window.deleteItem = (id) => {
+              state.items = state.items.filter(i => i.id !== id);
+              saveState();
+              renderAdminList();
+              updateGrid();
+          };
+
+          // Event Listeners
+          document.getElementById('admin-toggle').onclick = () => {
+              document.getElementById('admin-screen').style.display = 'flex';
+              document.getElementById('warning-threshold').value = state.warningThreshold;
+              renderAdminList();
+          };
+
+          document.getElementById('admin-close').onclick = () => {
+              document.getElementById('admin-screen').style.display = 'none';
+          };
+
+          document.getElementById('warning-threshold').onchange = (e) => {
+              state.warningThreshold = parseInt(e.target.value) || 15;
+              saveState();
+          };
+
+          document.getElementById('item-form').onsubmit = (e) => {
+              e.preventDefault();
+              const nameInput = document.getElementById('item-name');
+              const durationInput = document.getElementById('item-duration');
+              
+              state.items.push({
+                  id: generateId(),
+                  name: nameInput.value,
+                  duration: parseInt(durationInput.value),
+                  startTime: Date.now()
+              });
+              
+              nameInput.value = '';
+              durationInput.value = '';
+              saveState();
+              renderAdminList();
+              updateGrid();
+          };
+
+          // Start updates
+          setInterval(updateGrid, 1000);
+          updateGrid();
       </script>
-    </body>
+  </body>
   </html>
