@@ -16,7 +16,7 @@ const DEFAULT_ITEMS = [
   { name: 'Pickle', duration: 720 },
   { name: 'Towel Bucket', duration: 240 },
   { name: 'Onions Shaker', duration: 240 },
-].map(item => ({ ...item, id: nanoid(), startTime: Date.now() }));
+].map(item => ({ ...item, id: nanoid(), startTime: null }));
 
 let state = JSON.parse(localStorage.getItem('timer_state'));
 
@@ -43,11 +43,19 @@ const warningInput = document.getElementById('warning-threshold');
 
 // --- Timer Logic ---
 function formatTime(ms) {
-  if (ms <= 0) return 'EXPIRED';
-  const totalMin = Math.ceil(ms / 60000);
-  const h = Math.floor(totalMin / 60);
-  const m = totalMin % 60;
-  return `${h}h ${m}m`;
+  if (ms <= 0) return { main: '00:00', sub: ':00', expired: true };
+  const totalSeconds = Math.floor(ms / 1000);
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  
+  const main = h > 0 
+    ? `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+    : `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  
+  const sub = h > 0 ? `:${String(s).padStart(2, '0')}` : '';
+  
+  return { main, sub, expired: false };
 }
 
 function updateTimers() {
@@ -55,22 +63,50 @@ function updateTimers() {
   grid.innerHTML = '';
   
   state.items.forEach(item => {
-    const elapsedMs = now - item.startTime;
-    const durationMs = item.duration * 60000;
-    const remainingMs = durationMs - elapsedMs;
+    let remainingMs = 0;
+    let stateClass = 'state-ready';
+    let progress = 0;
     
-    let stateClass = 'state-normal';
-    if (remainingMs <= 0) {
-      stateClass = 'state-expired';
-    } else if (remainingMs <= state.warningThreshold * 60000) {
-      stateClass = 'state-warning';
+    if (item.startTime) {
+      const elapsedMs = now - item.startTime;
+      const durationMs = item.duration * 60000;
+      remainingMs = durationMs - elapsedMs;
+      progress = Math.max(0, (remainingMs / durationMs) * 100);
+      
+      if (remainingMs <= 0) {
+        stateClass = 'state-expired';
+      } else if (remainingMs <= state.warningThreshold * 60000) {
+        stateClass = 'state-warning';
+      } else {
+        stateClass = 'state-running';
+      }
     }
 
+    const timeData = item.startTime ? formatTime(remainingMs) : { main: String(item.duration).padStart(2, '0') + ':00', sub: '', expired: false };
+    
     const tile = document.createElement('div');
     tile.className = `tile ${stateClass}`;
     tile.innerHTML = `
-      <div class="tile-name">${item.name}</div>
-      <div class="tile-time">${formatTime(remainingMs)}</div>
+      <div class="tile-visual">
+        <svg viewBox="0 0 100 100">
+          <circle class="bg" cx="50" cy="50" r="45"></circle>
+          <circle class="progress" cx="50" cy="50" r="45" 
+            style="stroke-dasharray: 283; stroke-dashoffset: ${283 - (progress * 2.83)}">
+          </circle>
+        </svg>
+        <div class="time-display">
+          <span class="main">${timeData.main}</span>
+          <span class="sub">${timeData.sub}</span>
+        </div>
+      </div>
+      <div class="tile-info">
+        <div class="item-name">${item.name.toUpperCase()}</div>
+        <div class="status-indicator">
+          <span class="dot"></span>
+          ${item.startTime ? (remainingMs <= 0 ? 'EXPIRED' : 'RUNNING') : 'READY'}
+        </div>
+        <div class="tap-hint">${item.startTime ? 'Tap to restart' : 'Tap to start'}</div>
+      </div>
     `;
     
     tile.addEventListener('click', () => {
@@ -144,7 +180,7 @@ itemForm.addEventListener('submit', (e) => {
       id: nanoid(),
       name,
       duration,
-      startTime: Date.now()
+      startTime: null
     });
   }
   
