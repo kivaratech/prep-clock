@@ -79,57 +79,18 @@ header {
 .tile {
   background: var(--card-bg);
   border-radius: 12px;
-  padding: 16px;
+  padding: 12px 16px;
   display: flex;
-  flex-direction: column;
-  transition: transform 0.1s;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: transform 0.1s, background 0.2s;
   border: 1px solid rgba(255, 255, 255, 0.05);
   box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1);
 }
 
 .tile:active {
-  transform: scale(0.99);
-}
-
-.item-name {
-  font-size: 1.25rem;
-  font-weight: 900;
-  margin-bottom: 12px;
-  text-align: center;
-  color: #ffffff;
-}
-
-.sides-container {
-  display: flex;
-  gap: 16px;
-  justify-content: center;
-}
-
-.side-timer {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px;
-  border-radius: 8px;
-  transition: background 0.2s;
-}
-
-.dual-side .side-timer {
-  flex: 1;
-}
-
-.side-timer-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.side-label {
-  font-size: 0.65rem;
-  font-weight: 800;
-  color: var(--muted-color);
-  letter-spacing: 0.05em;
+  transform: scale(0.98);
 }
 
 .tile-visual {
@@ -182,43 +143,63 @@ header {
   margin-top: -1px;
 }
 
+.tile-info {
+  flex-grow: 1;
+}
+
+.item-name {
+  font-size: 1.25rem;
+  font-weight: 900;
+  margin-bottom: 2px;
+  letter-spacing: 0.01em;
+  color: #ffffff;
+}
+
 .status-indicator {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 0.65rem;
+  gap: 8px;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--muted-color);
+  margin-bottom: 4px;
 }
 
 .status-indicator .dot {
-  width: 4px;
-  height: 4px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: currentColor;
 }
 
+.tap-hint {
+  font-size: 0.75rem;
+  color: var(--muted-color);
+  opacity: 0.6;
+}
+
 /* States */
-.side-timer.state-ready circle.progress { stroke: var(--ready-color); opacity: 0.3; }
-.side-timer.state-ready .status-indicator { color: var(--ready-color); }
+.state-ready .tile-visual circle.progress { stroke: var(--ready-color); opacity: 0.3; }
+.state-ready .status-indicator { color: var(--ready-color); }
 
-.side-timer.state-running circle.progress { stroke: var(--primary-color); }
-.side-timer.state-running .status-indicator { color: var(--primary-color); }
+.state-running .tile-visual circle.progress { stroke: var(--primary-color); }
+.state-running .status-indicator { color: var(--primary-color); }
 
-.side-timer.state-warning circle.progress { stroke: var(--warning-color); }
-.side-timer.state-warning .status-indicator { color: var(--warning-color); }
+.state-warning .tile-visual circle.progress { stroke: var(--warning-color); }
+.state-warning .status-indicator { color: var(--warning-color); }
+.state-warning { animation: pulse-warning 2s infinite; }
 
-.side-timer.state-paused circle.progress { stroke: var(--ready-color); }
-.side-timer.state-paused .status-indicator { color: var(--muted-color); }
+.state-paused .tile-visual circle.progress { stroke: var(--ready-color); }
+.state-paused .status-indicator { color: var(--muted-color); }
 
-.side-timer.state-expired circle.progress { stroke: var(--expired-color); }
-.side-timer.state-expired .status-indicator { color: var(--expired-color); }
-.side-timer.state-expired { animation: blink-expired 0.5s infinite; }
+.state-expired .tile-visual circle.progress { stroke: var(--expired-color); }
+.state-expired .status-indicator { color: var(--expired-color); }
+.state-expired { animation: blink-expired 0.5s infinite; }
 
 @keyframes blink-expired {
-  0% { opacity: 1; background-color: rgba(239, 68, 68, 0.1); }
-  50% { opacity: 0.7; background-color: transparent; }
-  100% { opacity: 1; background-color: rgba(239, 68, 68, 0.1); }
+  0% { opacity: 1; border-color: var(--expired-color); }
+  50% { opacity: 0.7; border-color: transparent; background-color: rgba(239, 68, 68, 0.2); }
+  100% { opacity: 1; border-color: var(--expired-color); }
 }
 
 /* Admin Overlay */
@@ -262,33 +243,10 @@ section { margin-bottom: 32px; }
 h2 { font-size: 1.5rem; }
 h3 { margin-bottom: 16px; font-size: 1.125rem; color: var(--muted-color); }
 
-.form-group {
-  margin-bottom: 16px;
-}
-
-.form-group label {
-  display: block;
-  font-size: 0.875rem;
-  color: var(--muted-color);
-  margin-bottom: 4px;
-}
-
-.form-group-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.form-group-checkbox input {
-  width: auto;
-  margin: 0;
-}
-
 input {
   width: 100%;
   padding: 14px;
+  margin: 8px 0;
   background: #0f172a;
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: white;
