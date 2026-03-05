@@ -87,9 +87,29 @@ function updateTimers() {
     }
   });
 
+  // Sort items: 
+  // 1. Running/Expired/Paused (remainingMs < duration) sorted by remainingMs ascending
+  // 2. Ready (remainingMs == duration) sorted alphabetically by name
+  const sortedItems = [...state.items].sort((a, b) => {
+    const aDuration = a.duration * 60000;
+    const bDuration = b.duration * 60000;
+    const aIsReady = !a.isRunning && a.remainingMs >= aDuration;
+    const bIsReady = !b.isRunning && b.remainingMs >= bDuration;
+
+    if (aIsReady && !bIsReady) return 1;
+    if (!aIsReady && bIsReady) return -1;
+
+    if (aIsReady && bIsReady) {
+      return a.name.localeCompare(b.name);
+    }
+
+    // Both are not ready (running, paused, or expired)
+    return a.remainingMs - b.remainingMs;
+  });
+
   grid.innerHTML = '';
   
-  state.items.forEach(item => {
+  sortedItems.forEach(item => {
     let stateClass = 'state-ready';
     const durationMs = item.duration * 60000;
     const progress = Math.max(0, (item.remainingMs / durationMs) * 100);
