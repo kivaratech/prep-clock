@@ -41,8 +41,18 @@
             <h3>Add/Edit Item</h3>
             <form id="item-form">
               <input type="hidden" id="edit-id" />
-              <input type="text" id="item-name" placeholder="Item Name" required />
-              <input type="number" id="item-duration" placeholder="Minutes" required />
+              <div class="form-group">
+                <input type="text" id="item-name" placeholder="Item Name" required />
+              </div>
+              <div class="form-group">
+                <input type="number" id="item-duration" placeholder="Minutes" required />
+              </div>
+              <div class="form-group">
+                <label class="form-group-checkbox">
+                  <input type="checkbox" id="item-side2" />
+                  Enable Side 2
+                </label>
+              </div>
               <button type="submit">Save Item</button>
             </form>
           </section>
