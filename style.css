@@ -79,7 +79,7 @@ header {
 .tile {
   background: var(--card-bg);
   border-radius: 12px;
-  padding: 12px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   transition: transform 0.1s;
@@ -92,30 +92,37 @@ header {
 }
 
 .item-name {
-  font-size: 1.1rem;
+  font-size: 1.25rem;
   font-weight: 900;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   text-align: center;
   color: #ffffff;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  padding-bottom: 4px;
 }
 
 .sides-container {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   justify-content: center;
 }
 
 .side-timer {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 4px;
-  flex: 1;
+  gap: 12px;
   padding: 8px;
   border-radius: 8px;
   transition: background 0.2s;
+}
+
+.dual-side .side-timer {
+  flex: 1;
+}
+
+.side-timer-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
 }
 
 .side-label {
@@ -127,8 +134,8 @@ header {
 
 .tile-visual {
   position: relative;
-  width: 60px;
-  height: 60px;
+  width: 64px;
+  height: 64px;
   flex-shrink: 0;
 }
 
@@ -163,14 +170,14 @@ header {
 
 .time-display .main {
   display: block;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   font-weight: 800;
   font-family: 'JetBrains Mono', monospace;
 }
 
 .time-display .sub {
   display: block;
-  font-size: 0.55rem;
+  font-size: 0.6rem;
   opacity: 0.6;
   margin-top: -1px;
 }
@@ -179,7 +186,7 @@ header {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 0.6rem;
+  font-size: 0.65rem;
   font-weight: 600;
   color: var(--muted-color);
 }

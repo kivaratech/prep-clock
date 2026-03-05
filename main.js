@@ -175,7 +175,6 @@ function renderSide(item, sideKey, label) {
 
   return `
     <div class="side-timer ${stateClass}" data-side="${sideKey}">
-      <div class="side-label">${label}</div>
       <div class="tile-visual">
         <svg viewBox="0 0 100 100">
           <circle class="bg" cx="50" cy="50" r="45"></circle>
@@ -188,9 +187,12 @@ function renderSide(item, sideKey, label) {
           <span class="sub">${timeData.sub}</span>
         </div>
       </div>
-      <div class="status-indicator">
-        <span class="dot"></span>
-        ${side.remainingMs <= 0 ? 'EXPIRED' : (side.isRunning ? 'RUNNING' : (side.remainingMs < durationMs ? 'PAUSED' : 'READY'))}
+      <div class="side-timer-content">
+        <div class="side-label">${label}</div>
+        <div class="status-indicator">
+          <span class="dot"></span>
+          ${side.remainingMs <= 0 ? 'EXPIRED' : (side.isRunning ? 'RUNNING' : (side.remainingMs < durationMs ? 'PAUSED' : 'READY'))}
+        </div>
       </div>
     </div>
   `;
