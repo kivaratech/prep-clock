@@ -2,21 +2,21 @@ import './style.css'
 import { nanoid } from 'nanoid'
 
 // --- State Management ---
-const FIXED_CATEGORIES = ['TASKS', 'Secondary Shelf Life'];
+const FIXED_CATEGORIES = ['Tasks', 'Secondary Shelf Life'];
 
 const DEFAULT_ITEMS = [
-  { name: 'Travel Path', duration: 60, hasSide2: false, category: 'TASKS' },
-  { name: 'Hand Wash', duration: 60, hasSide2: false, category: 'TASKS' },
+  { name: 'Travel Path', duration: 60, hasSide2: false, category: 'Tasks' },
+  { name: 'Hand Wash', duration: 60, hasSide2: false, category: 'Tasks' },
   { name: 'Onions Slivered', duration: 30, hasSide2: false, category: 'Secondary Shelf Life' },
   { name: 'Tomato', duration: 240, hasSide2: false, category: 'Secondary Shelf Life' },
   { name: 'Shredded Chz', duration: 240, hasSide2: false, category: 'Secondary Shelf Life' },
   { name: 'Lettuce - Shred', duration: 240, hasSide2: false, category: 'Secondary Shelf Life' },
-  { name: 'Utensil Wash', duration: 240, hasSide2: false, category: 'TASKS' },
+  { name: 'Utensil Wash', duration: 240, hasSide2: false, category: 'Tasks' },
   { name: 'Crinkle Pickles', duration: 240, hasSide2: false, category: 'Secondary Shelf Life' },
   { name: 'Bacon', duration: 240, hasSide2: false, category: 'Secondary Shelf Life' },
   { name: 'Butter', duration: 240, hasSide2: false, category: 'Secondary Shelf Life' },
   { name: 'Pickle', duration: 720, hasSide2: false, category: 'Secondary Shelf Life' },
-  { name: 'Towel Bucket', duration: 240, hasSide2: false, category: 'TASKS' },
+  { name: 'Towel Bucket', duration: 240, hasSide2: false, category: 'Tasks' },
   { name: 'Onions Shaker', duration: 240, hasSide2: false, category: 'Secondary Shelf Life' },
 ].map(item => ({ 
   ...item, 
@@ -37,6 +37,7 @@ if (!state || !state.items || state.items.length === 0) {
 } else {
   state.categories = FIXED_CATEGORIES;
   state.items.forEach(item => {
+    if (item.category === 'TASKS') item.category = 'Tasks';
     if (!FIXED_CATEGORIES.includes(item.category)) item.category = FIXED_CATEGORIES[0];
     if (item.hasSide2 === undefined) item.hasSide2 = false;
     if (item.side1 === undefined) {
