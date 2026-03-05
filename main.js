@@ -106,7 +106,38 @@ function updateTimers() {
 
   grid.innerHTML = '';
   
-  state.categories.forEach(cat => {
+  const sortedCategories = [...FIXED_CATEGORIES].sort((a, b) => {
+    const getMinRemaining = (cat) => {
+      const catItems = state.items.filter(i => i.category === cat);
+      let min = Infinity;
+      catItems.forEach(item => {
+        const itemMin = item.hasSide2 
+          ? Math.min(item.side1.remainingMs, item.side2.remainingMs)
+          : item.side1.remainingMs;
+        if (itemMin < min) min = itemMin;
+      });
+      return min;
+    };
+
+    const isAnyActive = (cat) => {
+      return state.items.filter(i => i.category === cat).some(item => {
+        const d = item.duration * 60000;
+        let active = (item.side1.isRunning || item.side1.remainingMs < d);
+        if (item.hasSide2) active = active || (item.side2.isRunning || item.side2.remainingMs < d);
+        return active;
+      });
+    };
+
+    const aActive = isAnyActive(a);
+    const bActive = isAnyActive(b);
+
+    if (aActive && !bActive) return -1;
+    if (!aActive && bActive) return 1;
+    if (!aActive && !bActive) return a.localeCompare(b);
+    return getMinRemaining(a) - getMinRemaining(b);
+  });
+
+  sortedCategories.forEach(cat => {
     const catItems = state.items.filter(i => i.category === cat);
     if (catItems.length === 0) return;
 
