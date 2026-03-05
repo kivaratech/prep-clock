@@ -485,6 +485,19 @@ button:active { transform: scale(0.96); }
 
 #admin-close { background: #334155; }
 
+.bulk-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.btn-secondary {
+  background: #334155;
+  padding: 12px 20px;
+  font-size: 0.875rem;
+  flex: 1;
+}
+
 .item-list ul { list-style: none; }
 
 .admin-item-row {

@@ -71,6 +71,30 @@ const warningInput = document.getElementById('warning-threshold');
 const categorySelect = document.getElementById('item-category');
 const themeSelect = document.getElementById('theme-select');
 const side2OptionWrapper = document.getElementById('side2-option-wrapper');
+const bulkSide2OnBtn = document.getElementById('btn-bulk-side2-on');
+const bulkSide2OffBtn = document.getElementById('btn-bulk-side2-off');
+
+if (bulkSide2OnBtn) {
+  bulkSide2OnBtn.addEventListener('click', () => {
+    if (confirm('Enable Side 2 for ALL Secondary Shelf Life items?')) {
+      state.items.forEach(item => {
+        if (item.category === 'Secondary Shelf Life') item.hasSide2 = true;
+      });
+      saveState(); renderAdminItems(); updateTimers();
+    }
+  });
+}
+
+if (bulkSide2OffBtn) {
+  bulkSide2OffBtn.addEventListener('click', () => {
+    if (confirm('Disable Side 2 for ALL Secondary Shelf Life items?')) {
+      state.items.forEach(item => {
+        if (item.category === 'Secondary Shelf Life') item.hasSide2 = false;
+      });
+      saveState(); renderAdminItems(); updateTimers();
+    }
+  });
+}
 
 function updateSide2Visibility(category, wrapper) {
   if (!wrapper) return;
