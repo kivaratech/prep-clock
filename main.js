@@ -213,7 +213,31 @@ function renderAdminItems() {
   itemsUl.innerHTML = '';
   state.items.forEach(item => {
     const li = document.createElement('li');
-    li.innerHTML = `<span>${item.name} (${item.duration}m) [${item.category}]</span><div class="item-actions"><button class="btn-edit" data-id="${item.id}">Edit</button><button class="btn-delete" data-id="${item.id}">Delete</button></div>`;
+    li.className = 'admin-item-row';
+    li.dataset.id = item.id;
+    li.innerHTML = `
+      <div class="admin-item-display">
+        <span>${item.name} (${item.duration}m) [${item.category}]</span>
+        <div class="item-actions">
+          <button class="btn-edit" data-id="${item.id}">Edit</button>
+          <button class="btn-delete" data-id="${item.id}">Delete</button>
+        </div>
+      </div>
+      <div class="inline-edit-form hidden" id="edit-form-${item.id}">
+        <form class="inline-form">
+          <input type="text" class="edit-name" value="${item.name}" required />
+          <input type="number" class="edit-duration" value="${item.duration}" required />
+          <select class="edit-category" required></select>
+          <label class="checkbox-label">
+            <input type="checkbox" class="edit-side2" ${item.hasSide2 ? 'checked' : ''} /> Side 2
+          </label>
+          <div class="inline-form-actions">
+            <button type="submit" class="btn-save">Save</button>
+            <button type="button" class="btn-cancel">Cancel</button>
+          </div>
+        </form>
+      </div>
+    `;
     itemsUl.appendChild(li);
   });
 }
@@ -250,14 +274,44 @@ if (itemsUl) {
       renderAdminItems();
       updateTimers();
     } else if (e.target.classList.contains('btn-edit')) {
-      const item = state.items.find(item => item.id === id);
-      if (item) {
-        document.getElementById('edit-id').value = item.id;
-        document.getElementById('item-name').value = item.name;
-        document.getElementById('item-duration').value = item.duration;
-        document.getElementById('item-has-side2').checked = item.hasSide2;
-        document.getElementById('item-category').value = item.category;
-      }
+      // Hide all other open forms
+      document.querySelectorAll('.inline-edit-form').forEach(f => f.classList.add('hidden'));
+      
+      const formContainer = document.getElementById(`edit-form-${id}`);
+      formContainer.classList.remove('hidden');
+      
+      const select = formContainer.querySelector('.edit-category');
+      select.innerHTML = '';
+      state.categories.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        if (cat === state.items.find(i => i.id === id).category) opt.selected = true;
+        select.appendChild(opt);
+      });
+    } else if (e.target.classList.contains('btn-cancel')) {
+      e.target.closest('.inline-edit-form').classList.add('hidden');
+    }
+  });
+
+  itemsUl.addEventListener('submit', (e) => {
+    if (e.target.classList.contains('inline-form')) {
+      e.preventDefault();
+      const li = e.target.closest('.admin-item-row');
+      const id = li.dataset.id;
+      const item = state.items.find(i => i.id === id);
+      
+      item.name = e.target.querySelector('.edit-name').value;
+      item.duration = parseInt(e.target.querySelector('.edit-duration').value);
+      item.category = e.target.querySelector('.edit-category').value;
+      item.hasSide2 = e.target.querySelector('.edit-side2').checked;
+      
+      if (!item.side1.isRunning) item.side1.remainingMs = item.duration * 60000;
+      if (!item.side2.isRunning) item.side2.remainingMs = item.duration * 60000;
+      
+      saveState();
+      renderAdminItems();
+      updateTimers();
     }
   });
 }
