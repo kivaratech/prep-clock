@@ -109,6 +109,24 @@ function formatTime(ms) {
 
 let lastUpdateTime = Date.now();
 
+// --- Audio Management ---
+const alertSound = new Audio('/audio/alert.mp3');
+let lastExpiredCount = 0;
+
+function checkAlerts() {
+  const expiredCount = state.items.reduce((count, item) => {
+    let c = count;
+    if (item.side1.remainingMs <= 0) c++;
+    if (item.hasSide2 && item.side2.remainingMs <= 0) c++;
+    return c;
+  }, 0);
+
+  if (expiredCount > lastExpiredCount) {
+    alertSound.play().catch(e => console.log('Audio playback blocked until user interacts with page.'));
+  }
+  lastExpiredCount = expiredCount;
+}
+
 function updateTimers() {
   const now = Date.now();
   const delta = now - lastUpdateTime;
@@ -124,6 +142,8 @@ function updateTimers() {
       }
     });
   });
+
+  checkAlerts();
 
   grid.innerHTML = '';
   
