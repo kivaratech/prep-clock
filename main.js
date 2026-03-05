@@ -373,6 +373,8 @@ if (itemForm) {
     }
     saveState(); renderAdminItems(); updateTimers(); itemForm.reset();
     document.getElementById('edit-id').value = '';
+    document.getElementById('item-minutes').value = '0';
+    document.getElementById('item-hours').value = '0';
   });
 }
 
