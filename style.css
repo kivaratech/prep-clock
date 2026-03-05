@@ -58,8 +58,8 @@
 
 [data-theme="light"] #admin-toggle {
   background: rgba(0, 0, 0, 0.05);
-  color: #0F172A;
-  border-color: rgba(0, 0, 0, 0.1);
+  color: #000000;
+  border-color: rgba(0, 0, 0, 0.2);
 }
 
 * {
