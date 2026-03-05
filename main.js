@@ -274,21 +274,25 @@ if (itemsUl) {
       renderAdminItems();
       updateTimers();
     } else if (e.target.classList.contains('btn-edit')) {
+      const formContainer = document.getElementById(`edit-form-${id}`);
+      const isHidden = formContainer.classList.contains('hidden');
+      
       // Hide all other open forms
       document.querySelectorAll('.inline-edit-form').forEach(f => f.classList.add('hidden'));
       
-      const formContainer = document.getElementById(`edit-form-${id}`);
-      formContainer.classList.remove('hidden');
-      
-      const select = formContainer.querySelector('.edit-category');
-      select.innerHTML = '';
-      state.categories.forEach(cat => {
-        const opt = document.createElement('option');
-        opt.value = cat;
-        opt.textContent = cat;
-        if (cat === state.items.find(i => i.id === id).category) opt.selected = true;
-        select.appendChild(opt);
-      });
+      if (isHidden) {
+        formContainer.classList.remove('hidden');
+        
+        const select = formContainer.querySelector('.edit-category');
+        select.innerHTML = '';
+        state.categories.forEach(cat => {
+          const opt = document.createElement('option');
+          opt.value = cat;
+          opt.textContent = cat;
+          if (cat === state.items.find(i => i.id === id).category) opt.selected = true;
+          select.appendChild(opt);
+        });
+      }
     } else if (e.target.classList.contains('btn-cancel')) {
       e.target.closest('.inline-edit-form').classList.add('hidden');
     }
