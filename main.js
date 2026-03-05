@@ -31,11 +31,12 @@ if (!state || !state.items || state.items.length === 0) {
   state = {
     items: DEFAULT_ITEMS,
     categories: FIXED_CATEGORIES,
-    warningThreshold: 15
+    warningThreshold: 5
   };
   localStorage.setItem('timer_state', JSON.stringify(state));
 } else {
   state.categories = FIXED_CATEGORIES;
+  if (state.warningThreshold === 15) state.warningThreshold = 5;
   state.items.forEach(item => {
     if (item.category === 'TASKS') item.category = 'Tasks';
     if (!FIXED_CATEGORIES.includes(item.category)) item.category = FIXED_CATEGORIES[0];
