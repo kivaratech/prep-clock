@@ -8,6 +8,7 @@
     "serve": "vite preview"
   },
   "dependencies": {
+    "nanoid": "^5.1.6",
     "vite": "^6.2.2"
   }
 }

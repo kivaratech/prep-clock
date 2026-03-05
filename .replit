@@ -15,14 +15,6 @@ deploymentTarget = "static"
 build = ["npm", "run", "build"]
 publicDir = "dist"
 
-[[ports]]
-localPort = 5000
-externalPort = 80
-
-[[ports]]
-localPort = 5173
-externalPort = 80
-
 [agent]
 expertMode = true
 
@@ -49,3 +41,7 @@ outputType = "webview"
 task = "shell.exec"
 args = "npm run dev -- --host 0.0.0.0 --port 5000"
 waitForPort = 5000
+
+[[ports]]
+localPort = 5000
+externalPort = 3000

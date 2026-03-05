@@ -16,7 +16,13 @@ const DEFAULT_ITEMS = [
   { name: 'Pickle', duration: 720 },
   { name: 'Towel Bucket', duration: 240 },
   { name: 'Onions Shaker', duration: 240 },
-].map(item => ({ ...item, id: nanoid(), startTime: null }));
+].map(item => ({ 
+  ...item, 
+  id: nanoid(), 
+  startTime: null, 
+  remainingMs: item.duration * 60000,
+  isRunning: false 
+}));
 
 let state = JSON.parse(localStorage.getItem('timer_state'));
 
@@ -26,6 +32,12 @@ if (!state || !state.items || state.items.length === 0) {
     warningThreshold: 15
   };
   localStorage.setItem('timer_state', JSON.stringify(state));
+} else {
+  // Migration for old state if needed
+  state.items.forEach(item => {
+    if (item.remainingMs === undefined) item.remainingMs = item.duration * 60000;
+    if (item.isRunning === undefined) item.isRunning = !!item.startTime;
+  });
 }
 
 function saveState() {
@@ -44,7 +56,7 @@ const warningInput = document.getElementById('warning-threshold');
 // --- Timer Logic ---
 function formatTime(ms) {
   if (ms <= 0) return { main: '00:00', sub: ':00', expired: true };
-  const totalSeconds = Math.floor(ms / 1000);
+  const totalSeconds = Math.ceil(ms / 1000);
   const h = Math.floor(totalSeconds / 3600);
   const m = Math.floor((totalSeconds % 3600) / 60);
   const s = totalSeconds % 60;
@@ -58,34 +70,43 @@ function formatTime(ms) {
   return { main, sub, expired: false };
 }
 
+let lastUpdateTime = Date.now();
+
 function updateTimers() {
   const now = Date.now();
+  const delta = now - lastUpdateTime;
+  lastUpdateTime = now;
+
   if (!grid) return;
+  
+  // Update internal state
+  state.items.forEach(item => {
+    if (item.isRunning && item.remainingMs > 0) {
+      item.remainingMs -= delta;
+      if (item.remainingMs < 0) item.remainingMs = 0;
+    }
+  });
+
   grid.innerHTML = '';
   
   state.items.forEach(item => {
-    let remainingMs = 0;
     let stateClass = 'state-ready';
-    let progress = 100;
+    const durationMs = item.duration * 60000;
+    const progress = Math.max(0, (item.remainingMs / durationMs) * 100);
     
-    if (item.startTime) {
-      const elapsedMs = now - item.startTime;
-      const durationMs = item.duration * 60000;
-      remainingMs = durationMs - elapsedMs;
-      progress = Math.max(0, (remainingMs / durationMs) * 100);
-      
-      if (remainingMs <= 0) {
-        stateClass = 'state-expired';
-      } else if (remainingMs <= state.warningThreshold * 60000) {
+    if (item.remainingMs <= 0) {
+      stateClass = 'state-expired';
+    } else if (item.isRunning) {
+      if (item.remainingMs <= state.warningThreshold * 60000) {
         stateClass = 'state-warning';
       } else {
         stateClass = 'state-running';
       }
+    } else if (item.remainingMs < durationMs) {
+      stateClass = 'state-paused';
     }
 
-    const timeData = item.startTime 
-      ? formatTime(remainingMs) 
-      : { main: String(item.duration).padStart(2, '0') + ':00', sub: ':00', expired: false };
+    const timeData = formatTime(item.remainingMs);
     
     const tile = document.createElement('div');
     tile.className = `tile ${stateClass}`;
@@ -106,20 +127,42 @@ function updateTimers() {
         <div class="item-name">${item.name.toUpperCase()}</div>
         <div class="status-indicator">
           <span class="dot"></span>
-          ${item.startTime ? (remainingMs <= 0 ? 'EXPIRED' : 'RUNNING') : 'READY'}
+          ${item.remainingMs <= 0 ? 'EXPIRED' : (item.isRunning ? 'RUNNING' : (item.remainingMs < durationMs ? 'PAUSED' : 'READY'))}
         </div>
-        <div class="tap-hint">${item.startTime ? 'Tap to restart' : 'Tap to start'}</div>
+        <div class="tap-hint">${getTapHint(item, durationMs)}</div>
       </div>
     `;
     
     tile.addEventListener('click', () => {
-      item.startTime = Date.now();
+      handleTileClick(item, durationMs);
       saveState();
       updateTimers();
     });
     
     grid.appendChild(tile);
   });
+}
+
+function getTapHint(item, durationMs) {
+  if (item.remainingMs <= 0) return 'Tap to reset';
+  if (item.isRunning) return 'Tap to stop/reset';
+  if (item.remainingMs < durationMs) return 'Tap to start';
+  return 'Tap to start';
+}
+
+function handleTileClick(item, durationMs) {
+  if (item.remainingMs <= 0) {
+    // Expired: reset but don't start
+    item.remainingMs = durationMs;
+    item.isRunning = false;
+  } else if (item.isRunning) {
+    // Running: stop and reset
+    item.remainingMs = durationMs;
+    item.isRunning = false;
+  } else {
+    // Ready or Paused: start
+    item.isRunning = true;
+  }
 }
 
 // --- Admin Functions ---
@@ -185,13 +228,16 @@ if (itemForm) {
       if (item) {
         item.name = name;
         item.duration = duration;
+        if (!item.isRunning) item.remainingMs = duration * 60000;
       }
     } else {
       state.items.push({
         id: nanoid(),
         name,
         duration,
-        startTime: null
+        startTime: null,
+        remainingMs: duration * 60000,
+        isRunning: false
       });
     }
     
