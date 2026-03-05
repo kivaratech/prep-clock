@@ -53,7 +53,7 @@ function formatTime(ms) {
     ? `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
     : `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   
-  const sub = h > 0 ? `:${String(s).padStart(2, '0')}` : `:${String(s).padStart(2, '0')}`;
+  const sub = `:${String(s).padStart(2, '0')}`;
   
   return { main, sub, expired: false };
 }
