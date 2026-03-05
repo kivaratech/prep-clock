@@ -69,6 +69,26 @@ const itemForm = document.getElementById('item-form');
 const itemsUl = document.getElementById('items-ul');
 const warningInput = document.getElementById('warning-threshold');
 const categorySelect = document.getElementById('item-category');
+const themeSelect = document.getElementById('theme-select');
+
+// --- Theme Management ---
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  state.theme = theme;
+  saveState();
+}
+
+if (themeSelect) {
+  themeSelect.addEventListener('change', (e) => applyTheme(e.target.value));
+}
+
+// Initial theme apply
+if (state.theme) {
+  applyTheme(state.theme);
+  if (themeSelect) themeSelect.value = state.theme;
+} else {
+  state.theme = 'dark';
+}
 
 // --- Timer Logic ---
 function formatTime(ms) {
@@ -266,6 +286,7 @@ if (adminToggle) {
     adminScreen.classList.remove('hidden');
     populateCategorySelect();
     renderAdminItems();
+    if (themeSelect) themeSelect.value = state.theme || 'dark';
   });
 }
 
