@@ -70,6 +70,22 @@ const itemsUl = document.getElementById('items-ul');
 const warningInput = document.getElementById('warning-threshold');
 const categorySelect = document.getElementById('item-category');
 const themeSelect = document.getElementById('theme-select');
+const side2OptionWrapper = document.getElementById('side2-option-wrapper');
+
+function updateSide2Visibility(category, wrapper) {
+  if (!wrapper) return;
+  if (category === 'Secondary Shelf Life') {
+    wrapper.classList.remove('hidden');
+  } else {
+    wrapper.classList.add('hidden');
+  }
+}
+
+if (categorySelect) {
+  categorySelect.addEventListener('change', (e) => {
+    updateSide2Visibility(e.target.value, side2OptionWrapper);
+  });
+}
 
 // --- Theme Management ---
 function applyTheme(theme) {
@@ -233,6 +249,7 @@ function populateCategorySelect() {
     opt.textContent = cat;
     categorySelect.appendChild(opt);
   });
+  updateSide2Visibility(categorySelect.value, side2OptionWrapper);
 }
 
 function renderAdminItems() {
@@ -244,6 +261,7 @@ function renderAdminItems() {
     li.dataset.id = item.id;
     const h = Math.floor(item.duration / 60);
     const m = item.duration % 60;
+    const isSecondary = item.category === 'Secondary Shelf Life';
     li.innerHTML = `
       <div class="admin-item-display">
         <span>${item.name} (${h > 0 ? h + 'h ' : ''}${m}m) [${item.category}]</span>
@@ -265,8 +283,8 @@ function renderAdminItems() {
               <input type="number" class="edit-minutes" value="${m}" min="0" required />
             </div>
           </div>
-          <select class="edit-category" required></select>
-          <label class="checkbox-label">
+          <select class="edit-category" required data-item-id="${item.id}"></select>
+          <label class="checkbox-label ${isSecondary ? '' : 'hidden'}" id="edit-side2-wrapper-${item.id}">
             <input type="checkbox" class="edit-side2" ${item.hasSide2 ? 'checked' : ''} /> Side 2
           </label>
           <div class="inline-form-actions">
@@ -321,6 +339,10 @@ if (itemsUl) {
       }
     } else if (e.target.classList.contains('btn-cancel')) {
       e.target.closest('.inline-edit-form').classList.add('hidden');
+    } else if (e.target.classList.contains('edit-category')) {
+      const itemId = e.target.dataset.itemId;
+      const wrapper = document.getElementById(`edit-side2-wrapper-${itemId}`);
+      updateSide2Visibility(e.target.value, wrapper);
     }
   });
 
@@ -335,7 +357,7 @@ if (itemsUl) {
       const minutes = parseInt(e.target.querySelector('.edit-minutes').value) || 0;
       item.duration = (hours * 60) + minutes;
       item.category = e.target.querySelector('.edit-category').value;
-      item.hasSide2 = e.target.querySelector('.edit-side2').checked;
+      item.hasSide2 = item.category === 'Secondary Shelf Life' && e.target.querySelector('.edit-side2').checked;
       if (!item.side1.isRunning) item.side1.remainingMs = item.duration * 60000;
       if (!item.side2.isRunning) item.side2.remainingMs = item.duration * 60000;
       saveState(); renderAdminItems(); updateTimers();
@@ -351,8 +373,8 @@ if (itemForm) {
     const hours = parseInt(document.getElementById('item-hours').value) || 0;
     const minutes = parseInt(document.getElementById('item-minutes').value) || 0;
     const duration = (hours * 60) + minutes;
-    const hasSide2 = document.getElementById('item-has-side2').checked;
     const category = document.getElementById('item-category').value;
+    const hasSide2 = category === 'Secondary Shelf Life' && document.getElementById('item-has-side2').checked;
 
     if (id) {
       const item = state.items.find(item => item.id === id);
@@ -375,6 +397,7 @@ if (itemForm) {
     document.getElementById('edit-id').value = '';
     document.getElementById('item-minutes').value = '0';
     document.getElementById('item-hours').value = '0';
+    updateSide2Visibility(categorySelect.value, side2OptionWrapper);
   });
 }
 
