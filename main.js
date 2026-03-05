@@ -31,10 +31,11 @@ if (!state || !state.items || state.items.length === 0) {
   state = {
     items: DEFAULT_ITEMS,
     categories: FIXED_CATEGORIES,
-    warningThreshold: 15
+    warningThreshold: 5
   };
   localStorage.setItem('timer_state', JSON.stringify(state));
 } else {
+  state.warningThreshold = 5;
   state.categories = FIXED_CATEGORIES;
   state.items.forEach(item => {
     if (item.category === 'TASKS') item.category = 'Tasks';
@@ -254,7 +255,6 @@ if (adminToggle) {
     adminScreen.classList.remove('hidden');
     populateCategorySelect();
     renderAdminItems();
-    warningInput.value = state.warningThreshold;
   });
 }
 
@@ -337,11 +337,7 @@ if (itemForm) {
   });
 }
 
-if (warningInput) {
-  warningInput.addEventListener('change', () => {
-    state.warningThreshold = parseInt(warningInput.value) || 15;
-    saveState(); updateTimers();
-  });
+;
 }
 
 setInterval(updateTimers, 1000);
