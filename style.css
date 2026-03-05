@@ -95,6 +95,10 @@ header {
   font-family: monospace;
 }
 
+#admin-screen.hidden {
+  display: none !important;
+}
+
 #admin-screen {
   position: fixed;
   top: 0;
@@ -115,9 +119,8 @@ header {
   background: #222;
   padding: 20px;
   border-radius: 12px;
+  margin-bottom: 40px;
 }
-
-.hidden { display: none; }
 
 section { margin-bottom: 25px; }
 
