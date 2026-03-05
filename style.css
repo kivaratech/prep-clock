@@ -21,18 +21,43 @@
   --bg-color: #F8FAFC;
   --card-bg: #FFFFFF;
   --card-hover: #F1F5F9;
-  --card-border: rgba(0, 0, 0, 0.05);
+  --card-border: rgba(0, 0, 0, 0.1);
   --text-primary: #0F172A;
-  --text-secondary: #475569;
-  --text-muted: #94A3B8;
+  --text-secondary: #334155;
+  --text-muted: #64748B;
   --primary-color: #16A34A;
   --primary-bg: rgba(22, 163, 74, 0.1);
-  --warning-color: #D97706;
-  --warning-bg: rgba(217, 119, 6, 0.1);
-  --expired-color: #DC2626;
-  --expired-bg: rgba(220, 38, 38, 0.1);
-  --ready-color: #64748B;
-  --ready-bg: rgba(100, 116, 139, 0.1);
+  --warning-color: #B45309;
+  --warning-bg: rgba(180, 83, 9, 0.1);
+  --expired-color: #B91C1C;
+  --expired-bg: rgba(185, 28, 28, 0.1);
+  --ready-color: #475569;
+  --ready-bg: rgba(71, 85, 105, 0.1);
+}
+
+[data-theme="light"] .admin-content {
+  background: #FFFFFF;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .admin-item-row,
+[data-theme="light"] input[type="text"],
+[data-theme="light"] input[type="number"],
+[data-theme="light"] select {
+  background: #F1F5F9;
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .inline-edit-form {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="light"] header {
+  background: rgba(248, 250, 252, 0.9);
+}
+
+[data-theme="light"] #admin-toggle {
+  background: rgba(0, 0, 0, 0.05);
 }
 
 * {
