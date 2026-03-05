@@ -255,7 +255,6 @@ if (adminToggle) {
     adminScreen.classList.remove('hidden');
     populateCategorySelect();
     renderAdminItems();
-    warningInput.value = state.warningThreshold;
   });
 }
 
@@ -339,10 +338,7 @@ if (itemForm) {
 }
 
 if (warningInput) {
-  warningInput.addEventListener('change', () => {
-    state.warningThreshold = parseInt(warningInput.value) || 15;
-    saveState(); updateTimers();
-  });
+  // Warning threshold is now fixed at 5 minutes
 }
 
 setInterval(updateTimers, 1000);
