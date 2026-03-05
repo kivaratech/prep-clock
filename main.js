@@ -2,22 +2,22 @@ import './style.css'
 import { nanoid } from 'nanoid'
 
 // --- State Management ---
-const DEFAULT_CATEGORIES = ['Produce', 'Cleaning', 'Food Safety', 'Prep', 'Other'];
+const FIXED_CATEGORIES = ['TASKS', 'Secondary Shelf Life'];
 
 const DEFAULT_ITEMS = [
-  { name: 'Travel Path', duration: 60, hasSide2: false, category: 'Cleaning' },
-  { name: 'Hand Wash', duration: 60, hasSide2: false, category: 'Cleaning' },
-  { name: 'Onions Slivered', duration: 30, hasSide2: false, category: 'Produce' },
-  { name: 'Tomato', duration: 240, hasSide2: false, category: 'Produce' },
-  { name: 'Shredded Chz', duration: 240, hasSide2: false, category: 'Prep' },
-  { name: 'Lettuce - Shred', duration: 240, hasSide2: false, category: 'Produce' },
-  { name: 'Utensil Wash', duration: 240, hasSide2: false, category: 'Cleaning' },
-  { name: 'Crinkle Pickles', duration: 240, hasSide2: false, category: 'Prep' },
-  { name: 'Bacon', duration: 240, hasSide2: false, category: 'Prep' },
-  { name: 'Butter', duration: 240, hasSide2: false, category: 'Prep' },
-  { name: 'Pickle', duration: 720, hasSide2: false, category: 'Prep' },
-  { name: 'Towel Bucket', duration: 240, hasSide2: false, category: 'Cleaning' },
-  { name: 'Onions Shaker', duration: 240, hasSide2: false, category: 'Prep' },
+  { name: 'Travel Path', duration: 60, hasSide2: false, category: 'TASKS' },
+  { name: 'Hand Wash', duration: 60, hasSide2: false, category: 'TASKS' },
+  { name: 'Onions Slivered', duration: 30, hasSide2: false, category: 'Secondary Shelf Life' },
+  { name: 'Tomato', duration: 240, hasSide2: false, category: 'Secondary Shelf Life' },
+  { name: 'Shredded Chz', duration: 240, hasSide2: false, category: 'Secondary Shelf Life' },
+  { name: 'Lettuce - Shred', duration: 240, hasSide2: false, category: 'Secondary Shelf Life' },
+  { name: 'Utensil Wash', duration: 240, hasSide2: false, category: 'TASKS' },
+  { name: 'Crinkle Pickles', duration: 240, hasSide2: false, category: 'Secondary Shelf Life' },
+  { name: 'Bacon', duration: 240, hasSide2: false, category: 'Secondary Shelf Life' },
+  { name: 'Butter', duration: 240, hasSide2: false, category: 'Secondary Shelf Life' },
+  { name: 'Pickle', duration: 720, hasSide2: false, category: 'Secondary Shelf Life' },
+  { name: 'Towel Bucket', duration: 240, hasSide2: false, category: 'TASKS' },
+  { name: 'Onions Shaker', duration: 240, hasSide2: false, category: 'Secondary Shelf Life' },
 ].map(item => ({ 
   ...item, 
   id: nanoid(), 
@@ -30,14 +30,14 @@ let state = JSON.parse(localStorage.getItem('timer_state'));
 if (!state || !state.items || state.items.length === 0) {
   state = {
     items: DEFAULT_ITEMS,
-    categories: DEFAULT_CATEGORIES,
+    categories: FIXED_CATEGORIES,
     warningThreshold: 15
   };
   localStorage.setItem('timer_state', JSON.stringify(state));
 } else {
-  if (!state.categories) state.categories = DEFAULT_CATEGORIES;
+  state.categories = FIXED_CATEGORIES;
   state.items.forEach(item => {
-    if (!item.category) item.category = 'Other';
+    if (!FIXED_CATEGORIES.includes(item.category)) item.category = FIXED_CATEGORIES[0];
     if (item.hasSide2 === undefined) item.hasSide2 = false;
     if (item.side1 === undefined) {
       item.side1 = { 
@@ -67,9 +67,6 @@ const itemForm = document.getElementById('item-form');
 const itemsUl = document.getElementById('items-ul');
 const warningInput = document.getElementById('warning-threshold');
 const categorySelect = document.getElementById('item-category');
-const categoriesList = document.getElementById('categories-list');
-const addCategoryBtn = document.getElementById('add-category-btn');
-const newCategoryInput = document.getElementById('new-category-name');
 
 // --- Timer Logic ---
 function formatTime(ms) {
@@ -242,23 +239,12 @@ function renderAdminItems() {
   });
 }
 
-function renderAdminCategories() {
-  if (!categoriesList) return;
-  categoriesList.innerHTML = '';
-  state.categories.forEach(cat => {
-    const li = document.createElement('li');
-    li.innerHTML = `<span>${cat}</span><button class="btn-delete" data-cat="${cat}">Delete</button>`;
-    categoriesList.appendChild(li);
-  });
-}
-
 // --- Event Listeners ---
 if (adminToggle) {
   adminToggle.addEventListener('click', () => {
     adminScreen.classList.remove('hidden');
     populateCategorySelect();
     renderAdminItems();
-    renderAdminCategories();
     warningInput.value = state.warningThreshold;
   });
 }
@@ -276,13 +262,9 @@ if (itemsUl) {
     } else if (e.target.classList.contains('btn-edit')) {
       const formContainer = document.getElementById(`edit-form-${id}`);
       const isHidden = formContainer.classList.contains('hidden');
-      
-      // Hide all other open forms
       document.querySelectorAll('.inline-edit-form').forEach(f => f.classList.add('hidden'));
-      
       if (isHidden) {
         formContainer.classList.remove('hidden');
-        
         const select = formContainer.querySelector('.edit-category');
         select.innerHTML = '';
         state.categories.forEach(cat => {
@@ -304,18 +286,13 @@ if (itemsUl) {
       const li = e.target.closest('.admin-item-row');
       const id = li.dataset.id;
       const item = state.items.find(i => i.id === id);
-      
       item.name = e.target.querySelector('.edit-name').value;
       item.duration = parseInt(e.target.querySelector('.edit-duration').value);
       item.category = e.target.querySelector('.edit-category').value;
       item.hasSide2 = e.target.querySelector('.edit-side2').checked;
-      
       if (!item.side1.isRunning) item.side1.remainingMs = item.duration * 60000;
       if (!item.side2.isRunning) item.side2.remainingMs = item.duration * 60000;
-      
-      saveState();
-      renderAdminItems();
-      updateTimers();
+      saveState(); renderAdminItems(); updateTimers();
     }
   });
 }
@@ -348,28 +325,6 @@ if (itemForm) {
     }
     saveState(); renderAdminItems(); updateTimers(); itemForm.reset();
     document.getElementById('edit-id').value = '';
-  });
-}
-
-if (addCategoryBtn) {
-  addCategoryBtn.addEventListener('click', () => {
-    const name = newCategoryInput.value.trim();
-    if (name && !state.categories.includes(name)) {
-      state.categories.push(name);
-      newCategoryInput.value = '';
-      saveState(); populateCategorySelect(); renderAdminCategories();
-    }
-  });
-}
-
-if (categoriesList) {
-  categoriesList.addEventListener('click', (e) => {
-    const cat = e.target.dataset.cat;
-    if (cat && state.categories.length > 1) {
-      state.categories = state.categories.filter(c => c !== cat);
-      state.items.forEach(i => { if (i.category === cat) i.category = state.categories[0]; });
-      saveState(); populateCategorySelect(); renderAdminCategories(); updateTimers();
-    }
   });
 }
 
