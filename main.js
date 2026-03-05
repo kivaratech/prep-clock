@@ -53,19 +53,20 @@ function formatTime(ms) {
     ? `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
     : `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   
-  const sub = h > 0 ? `:${String(s).padStart(2, '0')}` : '';
+  const sub = h > 0 ? `:${String(s).padStart(2, '0')}` : `:${String(s).padStart(2, '0')}`;
   
   return { main, sub, expired: false };
 }
 
 function updateTimers() {
   const now = Date.now();
+  if (!grid) return;
   grid.innerHTML = '';
   
   state.items.forEach(item => {
     let remainingMs = 0;
     let stateClass = 'state-ready';
-    let progress = 0;
+    let progress = 100;
     
     if (item.startTime) {
       const elapsedMs = now - item.startTime;
@@ -82,7 +83,9 @@ function updateTimers() {
       }
     }
 
-    const timeData = item.startTime ? formatTime(remainingMs) : { main: String(item.duration).padStart(2, '0') + ':00', sub: '', expired: false };
+    const timeData = item.startTime 
+      ? formatTime(remainingMs) 
+      : { main: String(item.duration).padStart(2, '0') + ':00', sub: ':00', expired: false };
     
     const tile = document.createElement('div');
     tile.className = `tile ${stateClass}`;
@@ -121,6 +124,7 @@ function updateTimers() {
 
 // --- Admin Functions ---
 function renderAdminItems() {
+  if (!itemsUl) return;
   itemsUl.innerHTML = '';
   state.items.forEach(item => {
     const li = document.createElement('li');
@@ -136,66 +140,76 @@ function renderAdminItems() {
 }
 
 // --- Event Listeners ---
-adminToggle.addEventListener('click', () => {
-  adminScreen.classList.remove('hidden');
-  renderAdminItems();
-  warningInput.value = state.warningThreshold;
-});
+if (adminToggle) {
+  adminToggle.addEventListener('click', () => {
+    adminScreen.classList.remove('hidden');
+    renderAdminItems();
+    warningInput.value = state.warningThreshold;
+  });
+}
 
-adminClose.addEventListener('click', () => {
-  adminScreen.classList.add('hidden');
-});
+if (adminClose) {
+  adminClose.addEventListener('click', () => {
+    adminScreen.classList.add('hidden');
+  });
+}
 
-itemsUl.addEventListener('click', (e) => {
-  const id = e.target.dataset.id;
-  if (e.target.classList.contains('btn-delete')) {
-    state.items = state.items.filter(item => item.id !== id);
+if (itemsUl) {
+  itemsUl.addEventListener('click', (e) => {
+    const id = e.target.dataset.id;
+    if (e.target.classList.contains('btn-delete')) {
+      state.items = state.items.filter(item => item.id !== id);
+      saveState();
+      renderAdminItems();
+      updateTimers();
+    } else if (e.target.classList.contains('btn-edit')) {
+      const item = state.items.find(item => item.id === id);
+      if (item) {
+        document.getElementById('edit-id').value = item.id;
+        document.getElementById('item-name').value = item.name;
+        document.getElementById('item-duration').value = item.duration;
+      }
+    }
+  });
+}
+
+if (itemForm) {
+  itemForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const id = document.getElementById('edit-id').value;
+    const name = document.getElementById('item-name').value;
+    const duration = parseInt(document.getElementById('item-duration').value);
+
+    if (id) {
+      const item = state.items.find(item => item.id === id);
+      if (item) {
+        item.name = name;
+        item.duration = duration;
+      }
+    } else {
+      state.items.push({
+        id: nanoid(),
+        name,
+        duration,
+        startTime: null
+      });
+    }
+    
     saveState();
     renderAdminItems();
     updateTimers();
-  } else if (e.target.classList.contains('btn-edit')) {
-    const item = state.items.find(item => item.id === id);
-    if (item) {
-      document.getElementById('edit-id').value = item.id;
-      document.getElementById('item-name').value = item.name;
-      document.getElementById('item-duration').value = item.duration;
-    }
-  }
-});
+    itemForm.reset();
+    document.getElementById('edit-id').value = '';
+  });
+}
 
-itemForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-  const id = document.getElementById('edit-id').value;
-  const name = document.getElementById('item-name').value;
-  const duration = parseInt(document.getElementById('item-duration').value);
-
-  if (id) {
-    const item = state.items.find(item => item.id === id);
-    if (item) {
-      item.name = name;
-      item.duration = duration;
-    }
-  } else {
-    state.items.push({
-      id: nanoid(),
-      name,
-      duration,
-      startTime: null
-    });
-  }
-  
-  saveState();
-  renderAdminItems();
-  updateTimers();
-  itemForm.reset();
-  document.getElementById('edit-id').value = '';
-});
-
-warningInput.addEventListener('change', () => {
-  state.warningThreshold = parseInt(warningInput.value) || 15;
-  saveState();
-  updateTimers();
-});
+if (warningInput) {
+  warningInput.addEventListener('change', () => {
+    state.warningThreshold = parseInt(warningInput.value) || 15;
+    saveState();
+    updateTimers();
+  });
+}
 
 // --- Initialization ---
 setInterval(updateTimers, 1000);
