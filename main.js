@@ -160,9 +160,15 @@ itemsUl.onclick = (e) => {
 };
 
 // --- Init ---
-if (grid) {
-  setInterval(updateTimers, 10000); // Update every 10s
-  updateTimers();
-} else {
-  console.error("Timer grid element not found");
+function init() {
+  const grid = document.getElementById('timer-grid');
+  if (grid) {
+    setInterval(updateTimers, 1000); // Update every 1s for smoother UI
+    updateTimers();
+  } else {
+    // Retry if DOM not ready
+    setTimeout(init, 100);
+  }
 }
+
+init();
