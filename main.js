@@ -200,7 +200,13 @@ function handleSideClick(side, durationMs) {
 function populateCategorySelect() {
   if (!categorySelect) return;
   categorySelect.innerHTML = '';
-  state.categories.forEach(cat => {
+  // Sort to make 'Secondary Shelf Life' the first option
+  const sortedForSelect = [...state.categories].sort((a, b) => {
+    if (a === 'Secondary Shelf Life') return -1;
+    if (b === 'Secondary Shelf Life') return 1;
+    return 0;
+  });
+  sortedForSelect.forEach(cat => {
     const opt = document.createElement('option');
     opt.value = cat;
     opt.textContent = cat;
