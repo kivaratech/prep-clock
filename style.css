@@ -440,10 +440,15 @@ button:active { transform: scale(0.96); }
 .btn-save { background: var(--primary-color); }
 .btn-cancel { background: #334155; }
 
+.item-actions {
+  display: flex;
+  gap: 8px;
+}
+
 .item-actions button {
   padding: 10px 16px;
-  margin-left: 8px;
   font-size: 0.875rem;
+  margin: 0;
 }
 
 .btn-delete { background: #EF4444; }
