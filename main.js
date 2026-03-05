@@ -236,8 +236,14 @@ function renderAdminItems() {
         <form class="inline-form">
           <input type="text" class="edit-name" value="${item.name}" required />
           <div class="duration-inputs">
-            <input type="number" class="edit-hours" value="${h}" min="0" placeholder="Hours" />
-            <input type="number" class="edit-minutes" value="${m}" min="0" required placeholder="Minutes" />
+            <div class="input-group">
+              <label>Hr</label>
+              <input type="number" class="edit-hours" value="${h}" min="0" />
+            </div>
+            <div class="input-group">
+              <label>Min</label>
+              <input type="number" class="edit-minutes" value="${m}" min="0" required />
+            </div>
           </div>
           <select class="edit-category" required></select>
           <label class="checkbox-label">

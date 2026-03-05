@@ -373,10 +373,27 @@ h3 { margin-bottom: 20px; font-size: 1.125rem; color: var(--text-secondary); fon
 .duration-inputs {
   display: flex;
   gap: 12px;
+  margin: 12px 0;
 }
 
-.duration-inputs input {
+.input-group {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.input-group label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  margin-left: 4px;
+}
+
+.input-group input {
+  width: 100%;
+  margin: 0 !important;
 }
 
 input[type="text"], input[type="number"] {

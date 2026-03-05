@@ -36,8 +36,14 @@
               <input type="hidden" id="edit-id" />
               <input type="text" id="item-name" placeholder="Item Name" required />
               <div class="duration-inputs">
-                <input type="number" id="item-hours" placeholder="Hours" min="0" value="0" />
-                <input type="number" id="item-minutes" placeholder="Minutes" min="0" required />
+                <div class="input-group">
+                  <label>Hr</label>
+                  <input type="number" id="item-hours" min="0" value="0" />
+                </div>
+                <div class="input-group">
+                  <label>Min</label>
+                  <input type="number" id="item-minutes" min="0" required />
+                </div>
               </div>
               <select id="item-category" required></select>
               <label class="checkbox-label">
