@@ -11,7 +11,7 @@ const DEFAULT_ITEMS = [
   { name: 'Tomato', duration: 240, hasSide2: false, category: 'Secondary Shelf Life' },
   { name: 'Shredded Chz', duration: 240, hasSide2: false, category: 'Secondary Shelf Life' },
   { name: 'Lettuce - Shred', duration: 240, hasSide2: false, category: 'Secondary Shelf Life' },
-  { name: 'Utensil Wash', duration: 240, hasSide2: false, category: 'Tasks' },
+  { name: 'Utensil Wash', duration: 240, hasSide2: false, category: 'Secondary Shelf Life' },
   { name: 'Crinkle Pickles', duration: 240, hasSide2: false, category: 'Secondary Shelf Life' },
   { name: 'Bacon', duration: 240, hasSide2: false, category: 'Secondary Shelf Life' },
   { name: 'Butter', duration: 240, hasSide2: false, category: 'Secondary Shelf Life' },
