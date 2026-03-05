@@ -2,20 +2,22 @@ import './style.css'
 import { nanoid } from 'nanoid'
 
 // --- State Management ---
+const DEFAULT_CATEGORIES = ['Produce', 'Cleaning', 'Food Safety', 'Prep', 'Other'];
+
 const DEFAULT_ITEMS = [
-  { name: 'Travel Path', duration: 60, hasSide2: false },
-  { name: 'Hand Wash', duration: 60, hasSide2: false },
-  { name: 'Onions Slivered', duration: 30, hasSide2: false },
-  { name: 'Tomato', duration: 240, hasSide2: false },
-  { name: 'Shredded Chz', duration: 240, hasSide2: false },
-  { name: 'Lettuce - Shred', duration: 240, hasSide2: false },
-  { name: 'Utensil Wash', duration: 240, hasSide2: false },
-  { name: 'Crinkle Pickles', duration: 240, hasSide2: false },
-  { name: 'Bacon', duration: 240, hasSide2: false },
-  { name: 'Butter', duration: 240, hasSide2: false },
-  { name: 'Pickle', duration: 720, hasSide2: false },
-  { name: 'Towel Bucket', duration: 240, hasSide2: false },
-  { name: 'Onions Shaker', duration: 240, hasSide2: false },
+  { name: 'Travel Path', duration: 60, hasSide2: false, category: 'Cleaning' },
+  { name: 'Hand Wash', duration: 60, hasSide2: false, category: 'Cleaning' },
+  { name: 'Onions Slivered', duration: 30, hasSide2: false, category: 'Produce' },
+  { name: 'Tomato', duration: 240, hasSide2: false, category: 'Produce' },
+  { name: 'Shredded Chz', duration: 240, hasSide2: false, category: 'Prep' },
+  { name: 'Lettuce - Shred', duration: 240, hasSide2: false, category: 'Produce' },
+  { name: 'Utensil Wash', duration: 240, hasSide2: false, category: 'Cleaning' },
+  { name: 'Crinkle Pickles', duration: 240, hasSide2: false, category: 'Prep' },
+  { name: 'Bacon', duration: 240, hasSide2: false, category: 'Prep' },
+  { name: 'Butter', duration: 240, hasSide2: false, category: 'Prep' },
+  { name: 'Pickle', duration: 720, hasSide2: false, category: 'Prep' },
+  { name: 'Towel Bucket', duration: 240, hasSide2: false, category: 'Cleaning' },
+  { name: 'Onions Shaker', duration: 240, hasSide2: false, category: 'Prep' },
 ].map(item => ({ 
   ...item, 
   id: nanoid(), 
@@ -28,12 +30,14 @@ let state = JSON.parse(localStorage.getItem('timer_state'));
 if (!state || !state.items || state.items.length === 0) {
   state = {
     items: DEFAULT_ITEMS,
+    categories: DEFAULT_CATEGORIES,
     warningThreshold: 15
   };
   localStorage.setItem('timer_state', JSON.stringify(state));
 } else {
-  // Migration for old state
+  if (!state.categories) state.categories = DEFAULT_CATEGORIES;
   state.items.forEach(item => {
+    if (!item.category) item.category = 'Other';
     if (item.hasSide2 === undefined) item.hasSide2 = false;
     if (item.side1 === undefined) {
       item.side1 = { 
@@ -62,6 +66,10 @@ const adminClose = document.getElementById('admin-close');
 const itemForm = document.getElementById('item-form');
 const itemsUl = document.getElementById('items-ul');
 const warningInput = document.getElementById('warning-threshold');
+const categorySelect = document.getElementById('item-category');
+const categoriesList = document.getElementById('categories-list');
+const addCategoryBtn = document.getElementById('add-category-btn');
+const newCategoryInput = document.getElementById('new-category-name');
 
 // --- Timer Logic ---
 function formatTime(ms) {
@@ -89,7 +97,6 @@ function updateTimers() {
 
   if (!grid) return;
   
-  // Update internal state
   state.items.forEach(item => {
     [item.side1, item.side2].forEach(side => {
       if (side.isRunning && side.remainingMs > 0) {
@@ -99,113 +106,86 @@ function updateTimers() {
     });
   });
 
-  // Sort items
-  const sortedItems = [...state.items].sort((a, b) => {
-    const aDuration = a.duration * 60000;
-    const bDuration = b.duration * 60000;
-    
-    const getMinRemaining = (item) => {
-      let min = item.side1.remainingMs;
-      if (item.hasSide2) min = Math.min(min, item.side2.remainingMs);
-      return min;
-    };
-
-    const isAnyActive = (item) => {
-      const d = item.duration * 60000;
-      let active = item.side1.isRunning || item.side1.remainingMs < d;
-      if (item.hasSide2) active = active || item.side2.isRunning || item.side2.remainingMs < d;
-      return active;
-    };
-
-    const aActive = isAnyActive(a);
-    const bActive = isAnyActive(b);
-
-    if (aActive && !bActive) return -1;
-    if (!aActive && bActive) return 1;
-
-    if (!aActive && !bActive) {
-      return a.name.localeCompare(b.name);
-    }
-
-    return getMinRemaining(a) - getMinRemaining(b);
-  });
-
   grid.innerHTML = '';
   
-  sortedItems.forEach(item => {
-    const durationMs = item.duration * 60000;
-    
-    const tile = document.createElement('div');
-    tile.className = `tile ${item.hasSide2 ? 'has-side2' : ''}`;
-    
-    const createTimerHtml = (side, label) => {
-      let stateClass = 'state-ready';
-      const progress = Math.max(0, (side.remainingMs / durationMs) * 100);
-      
-      if (side.remainingMs <= 0) {
-        stateClass = 'state-expired';
-      } else if (side.isRunning) {
-        if (side.remainingMs <= state.warningThreshold * 60000) {
-          stateClass = 'state-warning';
-        } else {
-          stateClass = 'state-running';
-        }
-      } else if (side.remainingMs < durationMs) {
-        stateClass = 'state-paused';
-      }
+  state.categories.forEach(cat => {
+    const catItems = state.items.filter(i => i.category === cat);
+    if (catItems.length === 0) return;
 
-      const timeData = formatTime(side.remainingMs);
-      return `
-        <div class="timer-container ${stateClass}">
-          <div class="side-label">${label}</div>
-          <div class="tile-visual">
-            <svg viewBox="0 0 100 100">
-              <circle class="bg" cx="50" cy="50" r="45"></circle>
-              <circle class="progress" cx="50" cy="50" r="45" 
-                style="stroke-dasharray: 283; stroke-dashoffset: ${283 - (progress * 2.83)}">
-              </circle>
-            </svg>
-            <div class="time-display">
-              <span class="main">${timeData.main}</span>
-              <span class="sub">${timeData.sub}</span>
-            </div>
-          </div>
-          <div class="status-indicator">
-            <span class="dot"></span>
-            ${side.remainingMs <= 0 ? 'EXPIRED' : (side.isRunning ? 'RUNNING' : (side.remainingMs < durationMs ? 'PAUSED' : 'READY'))}
-          </div>
-        </div>
-      `;
-    };
+    const section = document.createElement('section');
+    section.className = 'category-section';
+    section.innerHTML = `<h2 class="category-header">${cat}</h2><div class="category-grid"></div>`;
+    const catGrid = section.querySelector('.category-grid');
 
-    tile.innerHTML = `
-      <div class="timer-wrapper">
-        ${createTimerHtml(item.side1, 'Side 1')}
-        ${item.hasSide2 ? createTimerHtml(item.side2, 'Side 2') : ''}
-      </div>
-      <div class="tile-info">
-        <div class="item-name">${item.name.toUpperCase()}</div>
-        <div class="tap-hint">Tap timer to start/reset</div>
-      </div>
-    `;
-    
-    const timerContainers = tile.querySelectorAll('.timer-container');
-    timerContainers[0].addEventListener('click', (e) => {
-      e.stopPropagation();
-      handleSideClick(item.side1, durationMs);
-      saveState();
-      updateTimers();
+    const sortedItems = [...catItems].sort((a, b) => {
+      const getMinRemaining = (item) => {
+        let min = item.side1.remainingMs;
+        if (item.hasSide2) min = Math.min(min, item.side2.remainingMs);
+        return min;
+      };
+      const isAnyActive = (item) => {
+        const d = item.duration * 60000;
+        let active = item.side1.isRunning || item.side1.remainingMs < d;
+        if (item.hasSide2) active = active || item.side2.isRunning || item.side2.remainingMs < d;
+        return active;
+      };
+      const aActive = isAnyActive(a);
+      const bActive = isAnyActive(b);
+      if (aActive && !bActive) return -1;
+      if (!aActive && bActive) return 1;
+      if (!aActive && !bActive) return a.name.localeCompare(b.name);
+      return getMinRemaining(a) - getMinRemaining(b);
     });
-    if (timerContainers[1]) {
-      timerContainers[1].addEventListener('click', (e) => {
+
+    sortedItems.forEach(item => {
+      const durationMs = item.duration * 60000;
+      const tile = document.createElement('div');
+      tile.className = `tile ${item.hasSide2 ? 'has-side2' : ''}`;
+      
+      const createTimerHtml = (side, label) => {
+        let stateClass = 'state-ready';
+        const progress = Math.max(0, (side.remainingMs / durationMs) * 100);
+        if (side.remainingMs <= 0) stateClass = 'state-expired';
+        else if (side.isRunning) {
+          if (side.remainingMs <= state.warningThreshold * 60000) stateClass = 'state-warning';
+          else stateClass = 'state-running';
+        } else if (side.remainingMs < durationMs) stateClass = 'state-paused';
+
+        const timeData = formatTime(side.remainingMs);
+        return `
+          <div class="timer-container ${stateClass}">
+            <div class="side-label">${label}</div>
+            <div class="tile-visual">
+              <svg viewBox="0 0 100 100">
+                <circle class="bg" cx="50" cy="50" r="45"></circle>
+                <circle class="progress" cx="50" cy="50" r="45" style="stroke-dasharray: 283; stroke-dashoffset: ${283 - (progress * 2.83)}"></circle>
+              </svg>
+              <div class="time-display"><span class="main">${timeData.main}</span><span class="sub">${timeData.sub}</span></div>
+            </div>
+            <div class="status-indicator"><span class="dot"></span>${side.remainingMs <= 0 ? 'EXPIRED' : (side.isRunning ? 'RUNNING' : (side.remainingMs < durationMs ? 'PAUSED' : 'READY'))}</div>
+          </div>`;
+      };
+
+      tile.innerHTML = `<div class="timer-wrapper">${createTimerHtml(item.side1, 'Side 1')}${item.hasSide2 ? createTimerHtml(item.side2, 'Side 2') : ''}</div><div class="tile-info"><div class="item-name">${item.name.toUpperCase()}</div><div class="tap-hint">Tap timer to start/reset</div></div>`;
+      
+      const timerContainers = tile.querySelectorAll('.timer-container');
+      timerContainers[0].addEventListener('click', (e) => {
         e.stopPropagation();
-        handleSideClick(item.side2, durationMs);
+        handleSideClick(item.side1, durationMs);
         saveState();
         updateTimers();
       });
-    }
-    
-    grid.appendChild(tile);
+      if (timerContainers[1]) {
+        timerContainers[1].addEventListener('click', (e) => {
+          e.stopPropagation();
+          handleSideClick(item.side2, durationMs);
+          saveState();
+          updateTimers();
+        });
+      }
+      catGrid.appendChild(tile);
+    });
+    grid.appendChild(section);
   });
 }
 
@@ -213,25 +193,38 @@ function handleSideClick(side, durationMs) {
   if (side.remainingMs <= 0 || side.isRunning) {
     side.remainingMs = durationMs;
     side.isRunning = false;
-  } else {
-    side.isRunning = true;
-  }
+  } else side.isRunning = true;
 }
 
 // --- Admin Functions ---
+function populateCategorySelect() {
+  if (!categorySelect) return;
+  categorySelect.innerHTML = '';
+  state.categories.forEach(cat => {
+    const opt = document.createElement('option');
+    opt.value = cat;
+    opt.textContent = cat;
+    categorySelect.appendChild(opt);
+  });
+}
+
 function renderAdminItems() {
   if (!itemsUl) return;
   itemsUl.innerHTML = '';
   state.items.forEach(item => {
     const li = document.createElement('li');
-    li.innerHTML = `
-      <span>${item.name} (${item.duration}m)${item.hasSide2 ? ' [Side 2]' : ''}</span>
-      <div class="item-actions">
-        <button class="btn-edit" data-id="${item.id}">Edit</button>
-        <button class="btn-delete" data-id="${item.id}">Delete</button>
-      </div>
-    `;
+    li.innerHTML = `<span>${item.name} (${item.duration}m) [${item.category}]</span><div class="item-actions"><button class="btn-edit" data-id="${item.id}">Edit</button><button class="btn-delete" data-id="${item.id}">Delete</button></div>`;
     itemsUl.appendChild(li);
+  });
+}
+
+function renderAdminCategories() {
+  if (!categoriesList) return;
+  categoriesList.innerHTML = '';
+  state.categories.forEach(cat => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span>${cat}</span><button class="btn-delete" data-cat="${cat}">Delete</button>`;
+    categoriesList.appendChild(li);
   });
 }
 
@@ -239,16 +232,14 @@ function renderAdminItems() {
 if (adminToggle) {
   adminToggle.addEventListener('click', () => {
     adminScreen.classList.remove('hidden');
+    populateCategorySelect();
     renderAdminItems();
+    renderAdminCategories();
     warningInput.value = state.warningThreshold;
   });
 }
 
-if (adminClose) {
-  adminClose.addEventListener('click', () => {
-    adminScreen.classList.add('hidden');
-  });
-}
+if (adminClose) adminClose.addEventListener('click', () => adminScreen.classList.add('hidden'));
 
 if (itemsUl) {
   itemsUl.addEventListener('click', (e) => {
@@ -265,6 +256,7 @@ if (itemsUl) {
         document.getElementById('item-name').value = item.name;
         document.getElementById('item-duration').value = item.duration;
         document.getElementById('item-has-side2').checked = item.hasSide2;
+        document.getElementById('item-category').value = item.category;
       }
     }
   });
@@ -277,6 +269,7 @@ if (itemForm) {
     const name = document.getElementById('item-name').value;
     const duration = parseInt(document.getElementById('item-duration').value);
     const hasSide2 = document.getElementById('item-has-side2').checked;
+    const category = document.getElementById('item-category').value;
 
     if (id) {
       const item = state.items.find(item => item.id === id);
@@ -284,36 +277,50 @@ if (itemForm) {
         item.name = name;
         item.duration = duration;
         item.hasSide2 = hasSide2;
+        item.category = category;
         if (!item.side1.isRunning) item.side1.remainingMs = duration * 60000;
         if (!item.side2.isRunning) item.side2.remainingMs = duration * 60000;
       }
     } else {
       state.items.push({
-        id: nanoid(),
-        name,
-        duration,
-        hasSide2,
+        id: nanoid(), name, duration, hasSide2, category,
         side1: { remainingMs: duration * 60000, isRunning: false },
         side2: { remainingMs: duration * 60000, isRunning: false }
       });
     }
-    
-    saveState();
-    renderAdminItems();
-    updateTimers();
-    itemForm.reset();
+    saveState(); renderAdminItems(); updateTimers(); itemForm.reset();
     document.getElementById('edit-id').value = '';
+  });
+}
+
+if (addCategoryBtn) {
+  addCategoryBtn.addEventListener('click', () => {
+    const name = newCategoryInput.value.trim();
+    if (name && !state.categories.includes(name)) {
+      state.categories.push(name);
+      newCategoryInput.value = '';
+      saveState(); populateCategorySelect(); renderAdminCategories();
+    }
+  });
+}
+
+if (categoriesList) {
+  categoriesList.addEventListener('click', (e) => {
+    const cat = e.target.dataset.cat;
+    if (cat && state.categories.length > 1) {
+      state.categories = state.categories.filter(c => c !== cat);
+      state.items.forEach(i => { if (i.category === cat) i.category = state.categories[0]; });
+      saveState(); populateCategorySelect(); renderAdminCategories(); updateTimers();
+    }
   });
 }
 
 if (warningInput) {
   warningInput.addEventListener('change', () => {
     state.warningThreshold = parseInt(warningInput.value) || 15;
-    saveState();
-    updateTimers();
+    saveState(); updateTimers();
   });
 }
 
-// --- Initialization ---
 setInterval(updateTimers, 1000);
 updateTimers();
