@@ -20,7 +20,6 @@ const DEFAULT_ITEMS = [
 
 let state = JSON.parse(localStorage.getItem('timer_state'));
 
-// If no state or state items are empty, initialize with defaults
 if (!state || !state.items || state.items.length === 0) {
   state = {
     items: DEFAULT_ITEMS,
@@ -44,8 +43,8 @@ const warningInput = document.getElementById('warning-threshold');
 
 // --- Timer Logic ---
 function formatTime(ms) {
-  const totalMin = Math.ceil(ms / 60000);
   if (ms <= 0) return 'EXPIRED';
+  const totalMin = Math.ceil(ms / 60000);
   const h = Math.floor(totalMin / 60);
   const m = totalMin % 60;
   return `${h}h ${m}m`;
@@ -73,16 +72,18 @@ function updateTimers() {
       <div class="tile-name">${item.name}</div>
       <div class="tile-time">${formatTime(remainingMs)}</div>
     `;
-    tile.onclick = () => {
+    
+    tile.addEventListener('click', () => {
       item.startTime = Date.now();
       saveState();
       updateTimers();
-    };
+    });
+    
     grid.appendChild(tile);
   });
 }
 
-// --- Admin Logic ---
+// --- Admin Functions ---
 function renderAdminItems() {
   itemsUl.innerHTML = '';
   state.items.forEach(item => {
@@ -98,27 +99,42 @@ function renderAdminItems() {
   });
 }
 
-adminToggle.onclick = () => {
+// --- Event Listeners ---
+adminToggle.addEventListener('click', () => {
   adminScreen.classList.remove('hidden');
-  warningInput.value = state.warningThreshold;
   renderAdminItems();
-};
+  warningInput.value = state.warningThreshold;
+});
 
-adminClose.onclick = () => adminScreen.classList.add('hidden');
+adminClose.addEventListener('click', () => {
+  adminScreen.classList.add('hidden');
+});
 
-warningInput.onchange = (e) => {
-  state.warningThreshold = parseInt(e.target.value) || 15;
-  saveState();
-};
+itemsUl.addEventListener('click', (e) => {
+  const id = e.target.dataset.id;
+  if (e.target.classList.contains('btn-delete')) {
+    state.items = state.items.filter(item => item.id !== id);
+    saveState();
+    renderAdminItems();
+    updateTimers();
+  } else if (e.target.classList.contains('btn-edit')) {
+    const item = state.items.find(item => item.id === id);
+    if (item) {
+      document.getElementById('edit-id').value = item.id;
+      document.getElementById('item-name').value = item.name;
+      document.getElementById('item-duration').value = item.duration;
+    }
+  }
+});
 
-itemForm.onsubmit = (e) => {
+itemForm.addEventListener('submit', (e) => {
   e.preventDefault();
   const id = document.getElementById('edit-id').value;
   const name = document.getElementById('item-name').value;
   const duration = parseInt(document.getElementById('item-duration').value);
 
   if (id) {
-    const item = state.items.find(i => i.id === id);
+    const item = state.items.find(item => item.id === id);
     if (item) {
       item.name = name;
       item.duration = duration;
@@ -131,31 +147,20 @@ itemForm.onsubmit = (e) => {
       startTime: Date.now()
     });
   }
-
-  itemForm.reset();
-  document.getElementById('edit-id').value = '';
+  
   saveState();
   renderAdminItems();
   updateTimers();
-};
+  itemForm.reset();
+  document.getElementById('edit-id').value = '';
+});
 
-itemsUl.onclick = (e) => {
-  const id = e.target.dataset.id;
-  if (e.target.classList.contains('btn-delete')) {
-    state.items = state.items.filter(i => i.id !== id);
-    saveState();
-    renderAdminItems();
-    updateTimers();
-  } else if (e.target.classList.contains('btn-edit')) {
-    const item = state.items.find(i => i.id === id);
-    if (item) {
-      document.getElementById('edit-id').value = item.id;
-      document.getElementById('item-name').value = item.name;
-      document.getElementById('item-duration').value = item.duration;
-    }
-  }
-};
+warningInput.addEventListener('change', () => {
+  state.warningThreshold = parseInt(warningInput.value) || 15;
+  saveState();
+  updateTimers();
+});
 
-// --- Init ---
-setInterval(updateTimers, 10000); // Update every 10s
+// --- Initialization ---
+setInterval(updateTimers, 1000);
 updateTimers();
