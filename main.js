@@ -3,25 +3,24 @@ import { nanoid } from 'nanoid'
 
 // --- State Management ---
 const DEFAULT_ITEMS = [
-  { name: 'Travel Path', duration: 60 },
-  { name: 'Hand Wash', duration: 60 },
-  { name: 'Onions Slivered', duration: 30 },
-  { name: 'Tomato', duration: 240 },
-  { name: 'Shredded Chz', duration: 240 },
-  { name: 'Lettuce - Shred', duration: 240 },
-  { name: 'Utensil Wash', duration: 240 },
-  { name: 'Crinkle Pickles', duration: 240 },
-  { name: 'Bacon', duration: 240 },
-  { name: 'Butter', duration: 240 },
-  { name: 'Pickle', duration: 720 },
-  { name: 'Towel Bucket', duration: 240 },
-  { name: 'Onions Shaker', duration: 240 },
+  { name: 'Travel Path', duration: 60, hasSide2: false },
+  { name: 'Hand Wash', duration: 60, hasSide2: false },
+  { name: 'Onions Slivered', duration: 30, hasSide2: false },
+  { name: 'Tomato', duration: 240, hasSide2: false },
+  { name: 'Shredded Chz', duration: 240, hasSide2: false },
+  { name: 'Lettuce - Shred', duration: 240, hasSide2: false },
+  { name: 'Utensil Wash', duration: 240, hasSide2: false },
+  { name: 'Crinkle Pickles', duration: 240, hasSide2: false },
+  { name: 'Bacon', duration: 240, hasSide2: false },
+  { name: 'Butter', duration: 240, hasSide2: false },
+  { name: 'Pickle', duration: 720, hasSide2: false },
+  { name: 'Towel Bucket', duration: 240, hasSide2: false },
+  { name: 'Onions Shaker', duration: 240, hasSide2: false },
 ].map(item => ({ 
   ...item, 
   id: nanoid(), 
-  startTime: null, 
-  remainingMs: item.duration * 60000,
-  isRunning: false 
+  side1: { remainingMs: item.duration * 60000, isRunning: false },
+  side2: { remainingMs: item.duration * 60000, isRunning: false }
 }));
 
 let state = JSON.parse(localStorage.getItem('timer_state'));
@@ -33,10 +32,21 @@ if (!state || !state.items || state.items.length === 0) {
   };
   localStorage.setItem('timer_state', JSON.stringify(state));
 } else {
-  // Migration for old state if needed
+  // Migration for old state
   state.items.forEach(item => {
-    if (item.remainingMs === undefined) item.remainingMs = item.duration * 60000;
-    if (item.isRunning === undefined) item.isRunning = !!item.startTime;
+    if (item.hasSide2 === undefined) item.hasSide2 = false;
+    if (item.side1 === undefined) {
+      item.side1 = { 
+        remainingMs: item.remainingMs !== undefined ? item.remainingMs : item.duration * 60000,
+        isRunning: item.isRunning !== undefined ? item.isRunning : false
+      };
+      delete item.remainingMs;
+      delete item.isRunning;
+      delete item.startTime;
+    }
+    if (item.side2 === undefined) {
+      item.side2 = { remainingMs: item.duration * 60000, isRunning: false };
+    }
   });
 }
 
@@ -81,107 +91,130 @@ function updateTimers() {
   
   // Update internal state
   state.items.forEach(item => {
-    if (item.isRunning && item.remainingMs > 0) {
-      item.remainingMs -= delta;
-      if (item.remainingMs < 0) item.remainingMs = 0;
-    }
+    [item.side1, item.side2].forEach(side => {
+      if (side.isRunning && side.remainingMs > 0) {
+        side.remainingMs -= delta;
+        if (side.remainingMs < 0) side.remainingMs = 0;
+      }
+    });
   });
 
-  // Sort items: 
-  // 1. Running/Expired/Paused (remainingMs < duration) sorted by remainingMs ascending
-  // 2. Ready (remainingMs == duration) sorted alphabetically by name
+  // Sort items
   const sortedItems = [...state.items].sort((a, b) => {
     const aDuration = a.duration * 60000;
     const bDuration = b.duration * 60000;
-    const aIsReady = !a.isRunning && a.remainingMs >= aDuration;
-    const bIsReady = !b.isRunning && b.remainingMs >= bDuration;
+    
+    const getMinRemaining = (item) => {
+      let min = item.side1.remainingMs;
+      if (item.hasSide2) min = Math.min(min, item.side2.remainingMs);
+      return min;
+    };
 
-    if (aIsReady && !bIsReady) return 1;
-    if (!aIsReady && bIsReady) return -1;
+    const isAnyActive = (item) => {
+      const d = item.duration * 60000;
+      let active = item.side1.isRunning || item.side1.remainingMs < d;
+      if (item.hasSide2) active = active || item.side2.isRunning || item.side2.remainingMs < d;
+      return active;
+    };
 
-    if (aIsReady && bIsReady) {
+    const aActive = isAnyActive(a);
+    const bActive = isAnyActive(b);
+
+    if (aActive && !bActive) return -1;
+    if (!aActive && bActive) return 1;
+
+    if (!aActive && !bActive) {
       return a.name.localeCompare(b.name);
     }
 
-    // Both are not ready (running, paused, or expired)
-    return a.remainingMs - b.remainingMs;
+    return getMinRemaining(a) - getMinRemaining(b);
   });
 
   grid.innerHTML = '';
   
   sortedItems.forEach(item => {
-    let stateClass = 'state-ready';
     const durationMs = item.duration * 60000;
-    const progress = Math.max(0, (item.remainingMs / durationMs) * 100);
-    
-    if (item.remainingMs <= 0) {
-      stateClass = 'state-expired';
-    } else if (item.isRunning) {
-      if (item.remainingMs <= state.warningThreshold * 60000) {
-        stateClass = 'state-warning';
-      } else {
-        stateClass = 'state-running';
-      }
-    } else if (item.remainingMs < durationMs) {
-      stateClass = 'state-paused';
-    }
-
-    const timeData = formatTime(item.remainingMs);
     
     const tile = document.createElement('div');
-    tile.className = `tile ${stateClass}`;
-    tile.innerHTML = `
-      <div class="tile-visual">
-        <svg viewBox="0 0 100 100">
-          <circle class="bg" cx="50" cy="50" r="45"></circle>
-          <circle class="progress" cx="50" cy="50" r="45" 
-            style="stroke-dasharray: 283; stroke-dashoffset: ${283 - (progress * 2.83)}">
-          </circle>
-        </svg>
-        <div class="time-display">
-          <span class="main">${timeData.main}</span>
-          <span class="sub">${timeData.sub}</span>
+    tile.className = `tile ${item.hasSide2 ? 'has-side2' : ''}`;
+    
+    const createTimerHtml = (side, label) => {
+      let stateClass = 'state-ready';
+      const progress = Math.max(0, (side.remainingMs / durationMs) * 100);
+      
+      if (side.remainingMs <= 0) {
+        stateClass = 'state-expired';
+      } else if (side.isRunning) {
+        if (side.remainingMs <= state.warningThreshold * 60000) {
+          stateClass = 'state-warning';
+        } else {
+          stateClass = 'state-running';
+        }
+      } else if (side.remainingMs < durationMs) {
+        stateClass = 'state-paused';
+      }
+
+      const timeData = formatTime(side.remainingMs);
+      return `
+        <div class="timer-container ${stateClass}">
+          <div class="side-label">${label}</div>
+          <div class="tile-visual">
+            <svg viewBox="0 0 100 100">
+              <circle class="bg" cx="50" cy="50" r="45"></circle>
+              <circle class="progress" cx="50" cy="50" r="45" 
+                style="stroke-dasharray: 283; stroke-dashoffset: ${283 - (progress * 2.83)}">
+              </circle>
+            </svg>
+            <div class="time-display">
+              <span class="main">${timeData.main}</span>
+              <span class="sub">${timeData.sub}</span>
+            </div>
+          </div>
+          <div class="status-indicator">
+            <span class="dot"></span>
+            ${side.remainingMs <= 0 ? 'EXPIRED' : (side.isRunning ? 'RUNNING' : (side.remainingMs < durationMs ? 'PAUSED' : 'READY'))}
+          </div>
         </div>
+      `;
+    };
+
+    tile.innerHTML = `
+      <div class="timer-wrapper">
+        ${createTimerHtml(item.side1, 'Side 1')}
+        ${item.hasSide2 ? createTimerHtml(item.side2, 'Side 2') : ''}
       </div>
       <div class="tile-info">
         <div class="item-name">${item.name.toUpperCase()}</div>
-        <div class="status-indicator">
-          <span class="dot"></span>
-          ${item.remainingMs <= 0 ? 'EXPIRED' : (item.isRunning ? 'RUNNING' : (item.remainingMs < durationMs ? 'PAUSED' : 'READY'))}
-        </div>
-        <div class="tap-hint">${getTapHint(item, durationMs)}</div>
+        <div class="tap-hint">Tap timer to start/reset</div>
       </div>
     `;
     
-    tile.addEventListener('click', () => {
-      handleTileClick(item, durationMs);
+    const timerContainers = tile.querySelectorAll('.timer-container');
+    timerContainers[0].addEventListener('click', (e) => {
+      e.stopPropagation();
+      handleSideClick(item.side1, durationMs);
       saveState();
       updateTimers();
     });
+    if (timerContainers[1]) {
+      timerContainers[1].addEventListener('click', (e) => {
+        e.stopPropagation();
+        handleSideClick(item.side2, durationMs);
+        saveState();
+        updateTimers();
+      });
+    }
     
     grid.appendChild(tile);
   });
 }
 
-function getTapHint(item, durationMs) {
-  if (item.remainingMs <= 0) return 'Tap to reset';
-  if (item.isRunning) return 'Tap to stop/reset';
-  if (item.remainingMs < durationMs) return 'Tap to start';
-  return 'Tap to start';
-}
-
-function handleTileClick(item, durationMs) {
-  if (item.remainingMs <= 0) {
-    // Expired: reset but don't start
-    item.remainingMs = durationMs;
-    item.isRunning = false;
-  } else if (item.isRunning) {
-    // Running: stop and reset
-    item.remainingMs = durationMs;
-    item.isRunning = false;
+function handleSideClick(side, durationMs) {
+  if (side.remainingMs <= 0 || side.isRunning) {
+    side.remainingMs = durationMs;
+    side.isRunning = false;
   } else {
-    // Ready or Paused: start
-    item.isRunning = true;
+    side.isRunning = true;
   }
 }
 
@@ -192,7 +225,7 @@ function renderAdminItems() {
   state.items.forEach(item => {
     const li = document.createElement('li');
     li.innerHTML = `
-      <span>${item.name} (${item.duration}m)</span>
+      <span>${item.name} (${item.duration}m)${item.hasSide2 ? ' [Side 2]' : ''}</span>
       <div class="item-actions">
         <button class="btn-edit" data-id="${item.id}">Edit</button>
         <button class="btn-delete" data-id="${item.id}">Delete</button>
@@ -231,6 +264,7 @@ if (itemsUl) {
         document.getElementById('edit-id').value = item.id;
         document.getElementById('item-name').value = item.name;
         document.getElementById('item-duration').value = item.duration;
+        document.getElementById('item-has-side2').checked = item.hasSide2;
       }
     }
   });
@@ -242,22 +276,25 @@ if (itemForm) {
     const id = document.getElementById('edit-id').value;
     const name = document.getElementById('item-name').value;
     const duration = parseInt(document.getElementById('item-duration').value);
+    const hasSide2 = document.getElementById('item-has-side2').checked;
 
     if (id) {
       const item = state.items.find(item => item.id === id);
       if (item) {
         item.name = name;
         item.duration = duration;
-        if (!item.isRunning) item.remainingMs = duration * 60000;
+        item.hasSide2 = hasSide2;
+        if (!item.side1.isRunning) item.side1.remainingMs = duration * 60000;
+        if (!item.side2.isRunning) item.side2.remainingMs = duration * 60000;
       }
     } else {
       state.items.push({
         id: nanoid(),
         name,
         duration,
-        startTime: null,
-        remainingMs: duration * 60000,
-        isRunning: false
+        hasSide2,
+        side1: { remainingMs: duration * 60000, isRunning: false },
+        side2: { remainingMs: duration * 60000, isRunning: false }
       });
     }
     
