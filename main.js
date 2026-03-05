@@ -1,5 +1,5 @@
 import './style.css'
-import { nanoid } from 'nanoid'
+const nanoid = () => Math.random().toString(36).substring(2, 11);
 
 // --- State Management ---
 const DEFAULT_ITEMS = [
