@@ -1,237 +1,60 @@
 <!DOCTYPE html>
-  <html lang="en">
+<html lang="en">
   <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-      <title>Shelf Life Timer Board</title>
-      <style>
-          :root {
-              --bg-color: #121212;
-              --card-bg: #1e1e1e;
-              --text-color: #ffffff;
-              --primary-color: #4caf50;
-              --warning-color: #ff9800;
-              --expired-color: #f44336;
-              --header-height: 60px;
-          }
-          * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-          body {
-              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-              background-color: var(--bg-color);
-              color: var(--text-color);
-              user-select: none;
-              overflow-x: hidden;
-              min-height: 100vh;
-          }
-          header {
-              height: var(--header-height);
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              padding: 0 20px;
-              background: #000;
-              position: sticky;
-              top: 0;
-              z-index: 10;
-          }
-          #admin-toggle { background: none; border: none; font-size: 24px; cursor: pointer; padding: 10px; color: white; }
-          
-          .grid {
-              display: grid;
-              grid-template-columns: repeat(2, 1fr);
-              gap: 15px;
-              padding: 15px;
-          }
-          
-          .tile {
-              background: var(--card-bg);
-              aspect-ratio: 16 / 9;
-              border-radius: 12px;
-              display: flex;
-              flex-direction: column;
-              justify-content: center;
-              align-items: center;
-              text-align: center;
-              padding: 10px;
-              border: 4px solid transparent;
-              cursor: pointer;
-          }
-          
-          .tile.state-normal { border-color: var(--primary-color); }
-          .tile.state-warning { border-color: var(--warning-color); }
-          .tile.state-expired { border-color: var(--expired-color); background-color: #400; }
-          
-          .tile-name { font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; }
-          .tile-time { font-size: 1.5rem; font-family: monospace; }
-          
-          #admin-screen {
-              position: fixed;
-              top: 0; left: 0; width: 100%; height: 100%;
-              background: rgba(0,0,0,0.95);
-              z-index: 100;
-              display: none;
-              justify-content: center;
-              padding-top: 20px;
-              overflow-y: auto;
-          }
-          
-          .admin-content { 
-              width: 90%; 
-              max-width: 600px; 
-              background: #222; 
-              padding: 20px; 
-              border-radius: 12px;
-          }
-          
-          section { margin-bottom: 25px; }
-          input { 
-              width: 100%; 
-              padding: 12px; 
-              margin: 10px 0; 
-              background: #333; 
-              border: 1px solid #444; 
-              color: white; 
-              border-radius: 4px;
-          }
-          
-          .btn {
-              padding: 12px 20px;
-              border: none;
-              border-radius: 4px;
-              cursor: pointer;
-              color: white;
-              font-weight: bold;
-          }
-          
-          .btn-primary { background: var(--primary-color); }
-          .btn-secondary { background: #555; }
-          
-          ul { list-style: none; margin-top: 20px; }
-          li { 
-              display: flex; 
-              justify-content: space-between; 
-              align-items: center;
-              padding: 10px; 
-              border-bottom: 1px solid #333; 
-          }
-      </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Shelf Life Timer Board</title>
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#121212" />
+    <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
+    <div id="app">
       <header>
-          <h1>Timer Board</h1>
-          <button id="admin-toggle">⚙️</button>
+        <h1>Timer Board</h1>
+        <button id="admin-toggle" aria-label="Settings">⚙️</button>
       </header>
-
+      
       <main id="timer-grid" class="grid"></main>
 
-      <div id="admin-screen">
-          <div class="admin-content">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                  <h2>Settings</h2>
-                  <button id="admin-close" class="btn btn-secondary">Close</button>
-              </div>
-              
-              <section>
-                  <label>Warning Threshold (min): <input type="number" id="warning-threshold"></label>
-              </section>
-              
-              <section>
-                  <h3>Add Item</h3>
-                  <form id="item-form">
-                      <input type="text" id="item-name" placeholder="Name" required>
-                      <input type="number" id="item-duration" placeholder="Minutes" required>
-                      <button type="submit" class="btn btn-primary" style="width:100%">Save Item</button>
-                  </form>
-              </section>
-              
-              <ul id="items-ul"></ul>
-          </div>
+      <div id="admin-screen" class="hidden">
+        <div class="admin-content">
+          <header>
+            <h2>Settings</h2>
+            <button id="admin-close">Close</button>
+          </header>
+          
+          <section class="global-settings">
+            <label>
+              Warning Threshold (min):
+              <input type="number" id="warning-threshold" min="1" />
+            </label>
+          </section>
+
+          <section class="item-editor">
+            <h3>Add/Edit Item</h3>
+            <form id="item-form">
+              <input type="hidden" id="edit-id" />
+              <input type="text" id="item-name" placeholder="Item Name" required />
+              <input type="number" id="item-duration" placeholder="Minutes" required />
+              <button type="submit">Save Item</button>
+            </form>
+          </section>
+
+          <section class="item-list">
+            <h3>Current Items</h3>
+            <ul id="items-ul"></ul>
+          </section>
+        </div>
       </div>
-
-      <script>
-          const generateId = () => Math.random().toString(36).substring(2, 11);
-          const DEFAULT_ITEMS = [
-              { name: 'Travel Path', duration: 60 },
-              { name: 'Hand Wash', duration: 60 },
-              { name: 'Onions Slivered', duration: 30 },
-              { name: 'Tomato', duration: 240 },
-              { name: 'Shredded Chz', duration: 240 },
-              { name: 'Lettuce - Shred', duration: 240 },
-              { name: 'Utensil Wash', duration: 240 },
-              { name: 'Crinkle Pickles', duration: 240 },
-              { name: 'Bacon', duration: 240 },
-              { name: 'Butter', duration: 240 },
-              { name: 'Pickle', duration: 720 },
-              { name: 'Towel Bucket', duration: 240 },
-              { name: 'Onions Shaker', duration: 240 }
-          ];
-
-          let state = JSON.parse(localStorage.getItem('shelf_timer_v2')) || {
-              items: DEFAULT_ITEMS.map(i => ({ ...i, id: generateId(), startTime: Date.now() })),
-              warningThreshold: 15
-          };
-
-          const save = () => localStorage.setItem('shelf_timer_v2', JSON.stringify(state));
-
-          function format(ms) {
-              if (ms <= 0) return 'EXPIRED';
-              const totalMin = Math.ceil(ms / 60000);
-              return `${Math.floor(totalMin / 60)}h ${totalMin % 60}m`;
-          }
-
-          function update() {
-              const grid = document.getElementById('timer-grid');
-              if (!grid) return;
-              const now = Date.now();
-              grid.innerHTML = state.items.map(item => {
-                  const remaining = (item.duration * 60000) - (now - item.startTime);
-                  const stateClass = remaining <= 0 ? 'state-expired' : (remaining <= state.warningThreshold * 60000 ? 'state-warning' : 'state-normal');
-                  return `
-                      <div class="tile ${stateClass}" onclick="resetTimer('${item.id}')">
-                          <div class="tile-name">${item.name}</div>
-                          <div class="tile-time">${format(remaining)}</div>
-                      </div>
-                  `;
-              }).join('');
-          }
-
-          window.resetTimer = (id) => {
-              const item = state.items.find(i => i.id === id);
-              if (item) { item.startTime = Date.now(); save(); update(); }
-          };
-
-          window.deleteItem = (id) => {
-              state.items = state.items.filter(i => i.id !== id);
-              save(); renderAdmin(); update();
-          };
-
-          function renderAdmin() {
-              const ul = document.getElementById('items-ul');
-              ul.innerHTML = state.items.map(item => `
-                  <li>
-                      <span>${item.name} (${item.duration}m)</span>
-                      <button class="btn" style="background:#f44336; padding:5px 10px;" onclick="deleteItem('${item.id}')">Delete</button>
-                  </li>
-              `).join('');
-          }
-
-          document.getElementById('admin-toggle').onclick = () => {
-              document.getElementById('admin-screen').style.display = 'flex';
-              document.getElementById('warning-threshold').value = state.warningThreshold;
-              renderAdmin();
-          };
-          document.getElementById('admin-close').onclick = () => document.getElementById('admin-screen').style.display = 'none';
-          document.getElementById('warning-threshold').onchange = (e) => { state.warningThreshold = parseInt(e.target.value) || 15; save(); };
-          document.getElementById('item-form').onsubmit = (e) => {
-              e.preventDefault();
-              const name = document.getElementById('item-name').value;
-              const duration = parseInt(document.getElementById('item-duration').value);
-              state.items.push({ id: generateId(), name, duration, startTime: Date.now() });
-              e.target.reset(); save(); renderAdmin(); update();
-          };
-
-          setInterval(update, 1000);
-          update();
-      </script>
+    </div>
+    <script type="module" src="/main.js"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js');
+        });
+      }
+    </script>
   </body>
-  </html>
+</html>
