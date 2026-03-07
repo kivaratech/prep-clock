@@ -138,7 +138,7 @@ header {
 }
 
 .category-header {
-  font-size: 1rem;
+  font-size: 2.5rem;
   font-weight: 800;
   color: var(--text-primary);
   padding-bottom: 2px;
@@ -173,10 +173,10 @@ header {
 .tile {
   background: var(--card-bg);
   border-radius: 12px;
-  padding: 12px 14px;
+  padding: 8px 10px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   cursor: default;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid var(--card-border);
@@ -238,8 +238,8 @@ header {
 
 .tile-visual {
   position: relative;
-  width: 75px;
-  height: 75px;
+  width: 55px;
+  height: 55px;
   flex-shrink: 0;
 }
 
@@ -275,7 +275,7 @@ header {
 
 .time-display .main {
   display: block;
-  font-size: 1.05rem;
+  font-size: 0.85rem;
   font-weight: 800;
   font-family: 'JetBrains Mono', monospace;
   letter-spacing: -0.02em;
@@ -284,7 +284,7 @@ header {
 
 .time-display .sub {
   display: block;
-  font-size: 0.65rem;
+  font-size: 0.55rem;
   color: var(--text-muted);
   margin-top: -1px;
 }
@@ -294,10 +294,10 @@ header {
 }
 
 .item-name {
-  font-size: 1rem;
+  font-size: 0.85rem;
   font-weight: 800;
-  margin-bottom: 2px;
-  line-height: 1.2;
+  margin-bottom: 1px;
+  line-height: 1.1;
   color: var(--text-primary);
   letter-spacing: -0.01em;
   word-wrap: break-word;
@@ -306,10 +306,10 @@ header {
 .status-indicator {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 0.65rem;
+  gap: 3px;
+  font-size: 0.55rem;
   font-weight: 700;
-  padding: 2px 8px;
+  padding: 2px 6px;
   border-radius: 9999px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -326,9 +326,9 @@ header {
 }
 
 .tap-hint {
-  font-size: 0.65rem;
+  font-size: 0.55rem;
   color: var(--text-muted);
-  margin-top: 2px;
+  margin-top: 1px;
   font-weight: 500;
 }
 
