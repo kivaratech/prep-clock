@@ -239,8 +239,8 @@ header {
 
 .tile-visual {
   position: relative;
-  width: 70px;
-  height: 70px;
+  width: 90px;
+  height: 90px;
   flex-shrink: 0;
 }
 
@@ -276,7 +276,7 @@ header {
 
 .time-display .main {
   display: block;
-  font-size: 0.85rem;
+  font-size: 1.4rem;
   font-weight: 800;
   font-family: 'JetBrains Mono', monospace;
   letter-spacing: -0.02em;
@@ -285,7 +285,7 @@ header {
 
 .time-display .sub {
   display: block;
-  font-size: 0.55rem;
+  font-size: 0.9rem;
   color: var(--text-muted);
   margin-top: -1px;
 }
