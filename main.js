@@ -4,6 +4,18 @@ import { nanoid } from 'nanoid'
 // --- State Management ---
 const FIXED_CATEGORIES = ['Tasks', 'Secondary Shelf Life'];
 
+const ALERT_OPTIONS = {
+  'alert1': 'Alert 1',
+  'alert2': 'Alert 2',
+  'alert3': 'Alert 3'
+};
+
+const ALERT_SOUNDS = {
+  'alert1': '/alert1.wav',
+  'alert2': '/alert2.mp3',
+  'alert3': '/alert3.mp3'
+};
+
 const DEFAULT_ITEMS = [
   { name: 'Travel Path', duration: 60, hasSide2: false, category: 'Tasks' },
   { name: 'Hand Wash', duration: 60, hasSide2: false, category: 'Tasks' },
@@ -22,7 +34,8 @@ const DEFAULT_ITEMS = [
   ...item, 
   id: nanoid(), 
   side1: { remainingMs: item.duration * 60000, isRunning: false },
-  side2: { remainingMs: item.duration * 60000, isRunning: false }
+  side2: { remainingMs: item.duration * 60000, isRunning: false },
+  alert: null
 }));
 
 let state = JSON.parse(localStorage.getItem('timer_state'));
@@ -31,7 +44,8 @@ if (!state || !state.items || state.items.length === 0) {
   state = {
     items: DEFAULT_ITEMS,
     categories: FIXED_CATEGORIES,
-    warningThreshold: 5
+    warningThreshold: 5,
+    defaultAlert: 'alert1'
   };
   localStorage.setItem('timer_state', JSON.stringify(state));
 } else {
@@ -67,7 +81,9 @@ if (!state || !state.items || state.items.length === 0) {
       item.side2.remainingMs -= elapsedMs;
       if (item.side2.remainingMs < 0) item.side2.remainingMs = 0;
     }
+    if (item.alert === undefined) item.alert = null;
   });
+  if (state.defaultAlert === undefined) state.defaultAlert = 'alert1';
 }
 
 function saveState() {
@@ -88,6 +104,21 @@ const themeSelect = document.getElementById('theme-select');
 const side2OptionWrapper = document.getElementById('side2-option-wrapper');
 const bulkSide2OnBtn = document.getElementById('btn-bulk-side2-on');
 const bulkSide2OffBtn = document.getElementById('btn-bulk-side2-off');
+const defaultAlertSelect = document.getElementById('default-alert-select');
+const testAlertBtn = document.getElementById('test-alert-btn');
+
+if (defaultAlertSelect) {
+  defaultAlertSelect.addEventListener('change', (e) => {
+    state.defaultAlert = e.target.value;
+    saveState();
+  });
+}
+
+if (testAlertBtn) {
+  testAlertBtn.addEventListener('click', () => {
+    playAlert(defaultAlertSelect.value);
+  });
+}
 
 if (bulkSide2OnBtn) {
   bulkSide2OnBtn.addEventListener('click', () => {
@@ -175,7 +206,11 @@ function updateTimers() {
     [item.side1, item.side2].forEach(side => {
       if (side.isRunning && side.remainingMs > 0) {
         side.remainingMs -= delta;
-        if (side.remainingMs < 0) side.remainingMs = 0;
+        if (side.remainingMs <= 0) {
+          side.remainingMs = 0;
+          side.isRunning = false;
+          playAlert(item.alert);
+        }
       }
     });
   });
@@ -272,6 +307,15 @@ function handleSideClick(side, durationMs) {
   } else side.isRunning = true;
 }
 
+function playAlert(alertKey) {
+  if (!alertKey) alertKey = state.defaultAlert;
+  const soundPath = ALERT_SOUNDS[alertKey];
+  if (soundPath) {
+    const audio = new Audio(soundPath);
+    audio.play().catch(() => {});
+  }
+}
+
 // --- Admin Functions ---
 function populateCategorySelect() {
   if (!categorySelect) return;
@@ -302,6 +346,16 @@ function renderAdminItems() {
     const h = Math.floor(item.duration / 60);
     const m = item.duration % 60;
     const isSecondary = item.category === 'Secondary Shelf Life';
+    const alertOptions = Object.entries(ALERT_OPTIONS).map(([key, label]) => 
+      `<option value="${key}" ${item.alert === key ? 'selected' : ''}>Default (${ALERT_OPTIONS[state.defaultAlert]})</option>` +
+      (Object.entries(ALERT_OPTIONS).filter(([k]) => k !== Object.keys(ALERT_OPTIONS)[0]).map(([k, l]) => 
+        `<option value="${k}" ${item.alert === k ? 'selected' : ''}>${l}</option>`
+      ).join(''))
+    ).join('').split('</option><option').slice(1).reduce((acc, val, i) => {
+      if (i === 0) return `<option value="" ${!item.alert ? 'selected' : ''}>Default (${ALERT_OPTIONS[state.defaultAlert]})</option><option${val}</option>`;
+      return acc + `<option${val}</option>`;
+    }, '');
+    
     li.innerHTML = `
       <div class="admin-item-display">
         <span>${item.name} (${h > 0 ? h + 'h ' : ''}${m}m) [${item.category}]</span>
@@ -327,6 +381,13 @@ function renderAdminItems() {
           <label class="checkbox-label ${isSecondary ? '' : 'hidden'}" id="edit-side2-wrapper-${item.id}">
             <input type="checkbox" class="edit-side2" ${item.hasSide2 ? 'checked' : ''} /> Side 2
           </label>
+          <label for="edit-alert-${item.id}">Alert Sound</label>
+          <select class="edit-alert" id="edit-alert-${item.id}">
+            <option value="">Default (${ALERT_OPTIONS[state.defaultAlert]})</option>
+            ${Object.entries(ALERT_OPTIONS).map(([key, label]) => 
+              `<option value="${key}" ${item.alert === key ? 'selected' : ''}>${label}</option>`
+            ).join('')}
+          </select>
           <div class="inline-form-actions">
             <button type="submit" class="btn-save">Save</button>
             <button type="button" class="btn-cancel">Cancel</button>
@@ -345,6 +406,7 @@ if (adminToggle) {
     populateCategorySelect();
     renderAdminItems();
     if (themeSelect) themeSelect.value = state.theme || 'dark';
+    if (defaultAlertSelect) defaultAlertSelect.value = state.defaultAlert || 'alert1';
   });
 }
 
@@ -398,6 +460,7 @@ if (itemsUl) {
       item.duration = (hours * 60) + minutes;
       item.category = e.target.querySelector('.edit-category').value;
       item.hasSide2 = item.category === 'Secondary Shelf Life' && e.target.querySelector('.edit-side2').checked;
+      item.alert = e.target.querySelector('.edit-alert').value || null;
       if (!item.side1.isRunning) item.side1.remainingMs = item.duration * 60000;
       if (!item.side2.isRunning) item.side2.remainingMs = item.duration * 60000;
       saveState(); renderAdminItems(); updateTimers();
