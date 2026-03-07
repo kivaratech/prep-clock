@@ -35,6 +35,10 @@ if (!state || !state.items || state.items.length === 0) {
   };
   localStorage.setItem('timer_state', JSON.stringify(state));
 } else {
+  // Handle background timer: calculate elapsed time and update running timers
+  const lastSaveTime = state.lastSaveTime || Date.now();
+  const elapsedMs = Date.now() - lastSaveTime;
+  
   state.categories = FIXED_CATEGORIES;
   if (state.warningThreshold === 15) state.warningThreshold = 5;
   state.items.forEach(item => {
@@ -53,10 +57,21 @@ if (!state || !state.items || state.items.length === 0) {
     if (item.side2 === undefined) {
       item.side2 = { remainingMs: item.duration * 60000, isRunning: false };
     }
+    
+    // Update timers that were running in the background
+    if (item.side1.isRunning) {
+      item.side1.remainingMs -= elapsedMs;
+      if (item.side1.remainingMs < 0) item.side1.remainingMs = 0;
+    }
+    if (item.side2 && item.side2.isRunning) {
+      item.side2.remainingMs -= elapsedMs;
+      if (item.side2.remainingMs < 0) item.side2.remainingMs = 0;
+    }
   });
 }
 
 function saveState() {
+  state.lastSaveTime = Date.now();
   localStorage.setItem('timer_state', JSON.stringify(state));
 }
 
