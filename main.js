@@ -304,16 +304,29 @@ function handleSideClick(side, durationMs) {
   if (side.remainingMs <= 0 || side.isRunning) {
     side.remainingMs = durationMs;
     side.isRunning = false;
+    stopAllAlerts();
   } else side.isRunning = true;
 }
+
+let activeAlerts = [];
 
 function playAlert(alertKey) {
   if (!alertKey) alertKey = state.defaultAlert;
   const soundPath = ALERT_SOUNDS[alertKey];
   if (soundPath) {
     const audio = new Audio(soundPath);
+    audio.loop = true;
     audio.play().catch(() => {});
+    activeAlerts.push(audio);
   }
+}
+
+function stopAllAlerts() {
+  activeAlerts.forEach(audio => {
+    audio.pause();
+    audio.currentTime = 0;
+  });
+  activeAlerts = [];
 }
 
 // --- Admin Functions ---
