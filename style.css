@@ -127,7 +127,7 @@ header {
 .grid {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
   padding: 8px;
 }
 
