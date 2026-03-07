@@ -134,7 +134,7 @@ header {
 .category-section {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0px;
 }
 
 .category-header {
