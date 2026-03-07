@@ -184,11 +184,14 @@ function formatTime(ms) {
   const m = Math.floor((totalSeconds % 3600) / 60);
   const s = totalSeconds % 60;
   
-  const main = h > 0 
-    ? `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
-    : `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-  
-  const sub = `:${String(s).padStart(2, '0')}`;
+  let main, sub;
+  if (h > 0) {
+    main = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    sub = `:${String(s).padStart(2, '0')}`;
+  } else {
+    main = `${String(m).padStart(2, '0')}`;
+    sub = `${String(s).padStart(2, '0')}`;
+  }
   
   return { main, sub, expired: false };
 }
