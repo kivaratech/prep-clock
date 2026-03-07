@@ -294,7 +294,8 @@ function populateCategorySelect() {
 function renderAdminItems() {
   if (!itemsUl) return;
   itemsUl.innerHTML = '';
-  state.items.forEach(item => {
+  const sortedItems = [...state.items].sort((a, b) => a.name.localeCompare(b.name));
+  sortedItems.forEach(item => {
     const li = document.createElement('li');
     li.className = 'admin-item-row';
     li.dataset.id = item.id;
