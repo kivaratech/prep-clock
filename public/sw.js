@@ -4,7 +4,10 @@ const ASSETS = [
   '/index.html',
   '/main.js',
   '/style.css',
-  '/manifest.json'
+  '/manifest.json',
+  '/alert1.wav',
+  '/alert2.mp3',
+  '/alert3.mp3'
 ];
 
 self.addEventListener('install', (event) => {

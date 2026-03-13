@@ -16,6 +16,8 @@ const ALERT_SOUNDS = {
   'alert3': '/alert3.mp3'
 };
 
+const audioCache = {};
+
 const DEFAULT_ITEMS = [
   { name: 'Travel Path', duration: 60, hasSide2: false, category: 'Tasks' },
   { name: 'Hand Wash', duration: 60, hasSide2: false, category: 'Tasks' },
@@ -313,14 +315,41 @@ function handleSideClick(side, durationMs) {
 
 let activeAlerts = [];
 
+async function preloadAudioFiles() {
+  for (const [key, path] of Object.entries(ALERT_SOUNDS)) {
+    if (!audioCache[key]) {
+      try {
+        const response = await fetch(path);
+        const blob = await response.blob();
+        audioCache[key] = URL.createObjectURL(blob);
+      } catch (e) {
+        audioCache[key] = path;
+      }
+    }
+  }
+}
+
 function playAlert(alertKey) {
   if (!alertKey) alertKey = state.defaultAlert;
-  const soundPath = ALERT_SOUNDS[alertKey];
+  const soundPath = audioCache[alertKey] || ALERT_SOUNDS[alertKey];
   if (soundPath) {
-    const audio = new Audio(soundPath);
-    audio.loop = true;
-    audio.play().catch(() => {});
-    activeAlerts.push(audio);
+    try {
+      const audio = new Audio(soundPath);
+      audio.loop = true;
+      const playPromise = audio.play();
+      if (playPromise && playPromise.catch) {
+        playPromise.catch((error) => {
+          if (error.name === 'NotAllowedError') {
+            document.addEventListener('click', () => {
+              const retryAudio = new Audio(soundPath);
+              retryAudio.loop = true;
+              retryAudio.play().catch(() => {});
+            }, { once: true });
+          }
+        });
+      }
+      activeAlerts.push(audio);
+    } catch (e) {}
   }
 }
 
@@ -416,6 +445,8 @@ function renderAdminItems() {
 }
 
 // --- Event Listeners ---
+preloadAudioFiles();
+
 if (adminToggle) {
   adminToggle.addEventListener('click', () => {
     adminScreen.classList.remove('hidden');

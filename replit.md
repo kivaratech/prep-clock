@@ -56,3 +56,10 @@ Global settings include a configurable warning threshold.
 
 ### No Backend Required
 The application is entirely client-side with no server dependencies beyond static file serving.
+
+## Audio System Reliability (Offline)
+- **Audio Preloading**: Alert files are fetched and cached as blobs in memory on app startup via `preloadAudioFiles()`
+- **Service Worker Caching**: All audio files (alert1.wav, alert2.mp3, alert3.mp3) are included in service worker cache manifest
+- **Fallback Strategy**: If audio blob fails to load, the system falls back to the direct file path
+- **Error Recovery**: Audio playback errors are caught and handled gracefully with automatic retry on user interaction
+- **No Network Dependency**: Audio plays from locally cached blobs or service worker cache, not from network
