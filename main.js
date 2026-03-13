@@ -118,7 +118,7 @@ if (defaultAlertSelect) {
 
 if (testAlertBtn) {
   testAlertBtn.addEventListener('click', () => {
-    playAlert(defaultAlertSelect.value);
+    playAlert(defaultAlertSelect.value, 4);
   });
 }
 
@@ -314,6 +314,7 @@ function handleSideClick(side, durationMs) {
 }
 
 let activeAlerts = [];
+let testAlertAudio = null;
 
 async function preloadAudioFiles() {
   for (const [key, path] of Object.entries(ALERT_SOUNDS)) {
@@ -329,26 +330,58 @@ async function preloadAudioFiles() {
   }
 }
 
-function playAlert(alertKey) {
+function playAlert(alertKey, loopCount) {
   if (!alertKey) alertKey = state.defaultAlert;
   const soundPath = audioCache[alertKey] || ALERT_SOUNDS[alertKey];
   if (soundPath) {
     try {
       const audio = new Audio(soundPath);
-      audio.loop = true;
+      
+      if (loopCount) {
+        let playCount = 0;
+        audio.loop = false;
+        audio.addEventListener('ended', () => {
+          playCount++;
+          if (playCount < loopCount) {
+            audio.currentTime = 0;
+            audio.play().catch(() => {});
+          }
+        });
+      } else {
+        audio.loop = true;
+      }
+      
       const playPromise = audio.play();
       if (playPromise && playPromise.catch) {
         playPromise.catch((error) => {
           if (error.name === 'NotAllowedError') {
             document.addEventListener('click', () => {
               const retryAudio = new Audio(soundPath);
-              retryAudio.loop = true;
+              if (loopCount) {
+                retryAudio.loop = false;
+                let playCount = 0;
+                retryAudio.addEventListener('ended', () => {
+                  playCount++;
+                  if (playCount < loopCount) {
+                    retryAudio.currentTime = 0;
+                    retryAudio.play().catch(() => {});
+                  }
+                });
+              } else {
+                retryAudio.loop = true;
+              }
               retryAudio.play().catch(() => {});
             }, { once: true });
           }
         });
       }
-      activeAlerts.push(audio);
+      
+      if (loopCount) {
+        if (testAlertAudio) testAlertAudio.pause();
+        testAlertAudio = audio;
+      } else {
+        activeAlerts.push(audio);
+      }
     } catch (e) {}
   }
 }
