@@ -118,7 +118,7 @@ if (defaultAlertSelect) {
 
 if (testAlertBtn) {
   testAlertBtn.addEventListener('click', () => {
-    playAlert(defaultAlertSelect.value, 4);
+    playAlert(defaultAlertSelect.value, 3);
   });
 }
 
@@ -490,7 +490,13 @@ if (adminToggle) {
   });
 }
 
-if (adminClose) adminClose.addEventListener('click', () => adminScreen.classList.add('hidden'));
+if (adminClose) adminClose.addEventListener('click', () => {
+  adminScreen.classList.add('hidden');
+  if (testAlertAudio) {
+    testAlertAudio.pause();
+    testAlertAudio = null;
+  }
+});
 
 if (itemsUl) {
   itemsUl.addEventListener('click', (e) => {
