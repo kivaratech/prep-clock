@@ -57,9 +57,30 @@ Global settings include a configurable warning threshold.
 ### No Backend Required
 The application is entirely client-side with no server dependencies beyond static file serving.
 
-## Audio System Reliability (Offline)
-- **Audio Preloading**: Alert files are fetched and cached as blobs in memory on app startup via `preloadAudioFiles()`
-- **Service Worker Caching**: All audio files (alert1.wav, alert2.mp3, alert3.mp3) are included in service worker cache manifest
-- **Fallback Strategy**: If audio blob fails to load, the system falls back to the direct file path
-- **Error Recovery**: Audio playback errors are caught and handled gracefully with automatic retry on user interaction
-- **No Network Dependency**: Audio plays from locally cached blobs or service worker cache, not from network
+## Offline-First Implementation
+
+### Zero Network Dependencies
+- **No External Fonts**: System fonts used instead of Google Fonts (removed googleapis.com, gstatic.com dependencies)
+- **No External Icons**: Manifest removed CDN favicon reference (was cdn.replit.com)
+- **All Assets Local**: HTML, CSS, JS, and audio files cached by service worker
+
+### Service Worker Caching Strategy
+- **Cache-First for Static Assets**: Critical app files (HTML, JS, CSS, manifest) cached first, then network
+- **Fallback on Offline**: If offline, app loads from cache without network request
+- **Auto-Cache Updates**: New assets automatically cached when online
+- **Graceful Degradation**: App continues running on stale cache if network unavailable
+- **Cache Busting**: Version incremented (v2) to force fresh cache when deployed
+
+### Audio System Reliability (Offline)
+- **Audio Preloading**: Alert files fetched with 5-second timeout and cached as blobs in memory
+- **Service Worker Caching**: All audio files (alert1.wav, alert2.mp3, alert3.mp3) in critical cache manifest
+- **Dual Fallback**: Uses blob URL if available, otherwise direct path from service worker cache
+- **Error Recovery**: Gracefully falls back to direct file path if blob creation fails
+- **No Network Required**: Audio plays from local cache, never requires internet
+
+### Startup Flow (Offline-Ready)
+1. Service worker serves index.html from cache
+2. CSS and JS load from cache (no external fonts/CDN)
+3. Local storage restores app state (timers, settings, items)
+4. Audio files already cached—ready to play immediately
+5. App fully functional with zero network requests

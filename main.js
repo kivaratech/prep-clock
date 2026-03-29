@@ -320,9 +320,16 @@ async function preloadAudioFiles() {
   for (const [key, path] of Object.entries(ALERT_SOUNDS)) {
     if (!audioCache[key]) {
       try {
-        const response = await fetch(path);
-        const blob = await response.blob();
-        audioCache[key] = URL.createObjectURL(blob);
+        const response = await Promise.race([
+          fetch(path),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+        ]);
+        if (response.ok) {
+          const blob = await response.blob();
+          audioCache[key] = URL.createObjectURL(blob);
+        } else {
+          audioCache[key] = path;
+        }
       } catch (e) {
         audioCache[key] = path;
       }
