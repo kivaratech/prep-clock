@@ -603,3 +603,7 @@ if (warningInput) {
 
 setInterval(updateTimers, 1000);
 updateTimers();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js');
+}

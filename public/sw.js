@@ -63,7 +63,7 @@ self.addEventListener('fetch', (event) => {
           const cloned = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, cloned)).catch(() => {});
           return response;
-        }).catch(() => response)
+        }).catch(() => caches.match(request))
       })
     );
   }
