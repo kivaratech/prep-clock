@@ -127,7 +127,8 @@ if (bulkSide2OnBtn) {
       state.items.forEach(item => {
         if (item.category === 'Secondary Shelf Life') item.hasSide2 = true;
       });
-      saveState(); renderAdminItems(); renderGrid();
+      saveState(); renderGrid();
+      adminScreen.classList.add('hidden');
     }
   });
 }
@@ -138,7 +139,8 @@ if (bulkSide2OffBtn) {
       state.items.forEach(item => {
         if (item.category === 'Secondary Shelf Life') item.hasSide2 = false;
       });
-      saveState(); renderAdminItems(); renderGrid();
+      saveState(); renderGrid();
+      adminScreen.classList.add('hidden');
     }
   });
 }
