@@ -272,6 +272,52 @@ function computeGridSortKey() {
 
 let gridSortKey = '';
 
+function fitLayout() {
+  requestAnimationFrame(() => {
+    const headerEl = document.querySelector('#app > header');
+    const catHeaderEls = grid ? grid.querySelectorAll('.category-header') : [];
+
+    const vH = window.innerHeight;
+    const vW = window.innerWidth;
+    const headerH = headerEl ? headerEl.offsetHeight : 48;
+
+    let catH = 0;
+    catHeaderEls.forEach(el => { catH += el.offsetHeight + 2; });
+
+    const categories = FIXED_CATEGORIES
+      .map(cat => state.items.filter(i => i.category === cat).length)
+      .filter(n => n > 0);
+
+    if (!categories.length) return;
+
+    const TILE_GAP = 4;
+    const GRID_PAD = 8;
+    const BUFFER = 8;
+
+    let bestCols = 1, bestScore = -1;
+    const totalItems = categories.reduce((s, c) => s + c, 0);
+
+    for (let cols = 1; cols <= totalItems; cols++) {
+      const rows = categories.reduce((s, c) => s + Math.ceil(c / cols), 0);
+      const rowGaps = (rows - categories.length) * TILE_GAP;
+      const colGaps = (cols - 1) * TILE_GAP;
+      const tileH = (vH - headerH - catH - GRID_PAD - rowGaps - BUFFER) / rows;
+      const tileW = (vW - GRID_PAD - colGaps) / cols;
+      if (tileH <= 0 || tileW <= 0) continue;
+      // Score = effective circle size (bounded by both tile width and height)
+      const score = Math.min(0.9 * (tileW - 12), tileH - 44);
+      if (score > bestScore) { bestScore = score; bestCols = cols; }
+    }
+
+    const totalRows = categories.reduce((s, c) => s + Math.ceil(c / bestCols), 0);
+    const rowGaps = (totalRows - categories.length) * TILE_GAP;
+    const tileH = Math.floor((vH - headerH - catH - GRID_PAD - rowGaps - BUFFER) / totalRows);
+
+    document.documentElement.style.setProperty('--grid-cols', String(bestCols));
+    document.documentElement.style.setProperty('--tile-height', `${tileH}px`);
+  });
+}
+
 // Full DOM rebuild — called when structure changes (sort order, item added/deleted, timer expired)
 function renderGrid() {
   if (!grid) return;
@@ -333,6 +379,7 @@ function renderGrid() {
     });
     grid.appendChild(section);
   });
+  fitLayout();
 }
 
 // Lightweight per-second update — only touches text and classes, no DOM rebuild
@@ -667,6 +714,8 @@ setInterval(() => {
 }, 1000);
 
 renderGrid();
+
+window.addEventListener('resize', fitLayout);
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js');
