@@ -240,8 +240,8 @@ header {
 .tile-visual {
   container-type: inline-size;
   position: relative;
-  width: min(80cqi, 72px);
-  height: min(80cqi, 72px);
+  width: min(90cqi, 90px);
+  height: min(90cqi, 90px);
   flex-shrink: 0;
 }
 
@@ -333,6 +333,9 @@ header {
 
 /* States */
 .state-ready .tile-visual circle.progress { stroke: var(--ready-color); opacity: 0.2; }
+.state-ready .status-indicator { display: none; }
+.state-running .status-indicator { display: none; }
+.state-expired .status-indicator { display: none; }
 
 .state-running .tile-visual circle.progress { stroke: var(--primary-color); }
 .state-running .status-indicator { background: var(--primary-bg); color: var(--primary-color); }
