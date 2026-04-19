@@ -284,32 +284,48 @@ function fitLayout() {
     let catH = 0;
     catHeaderEls.forEach(el => { catH += el.offsetHeight + 2; });
 
-    const categories = FIXED_CATEGORIES
-      .map(cat => state.items.filter(i => i.category === cat).length)
-      .filter(n => n > 0);
+    const catData = FIXED_CATEGORIES
+      .map(cat => {
+        const items = state.items.filter(i => i.category === cat);
+        return { count: items.length, side2: items.filter(i => i.hasSide2).length };
+      })
+      .filter(c => c.count > 0);
 
-    if (!categories.length) return;
+    if (!catData.length) return;
 
     const TILE_GAP = 4;
     const GRID_PAD = 8;
     const BUFFER = 8;
 
-    let bestCols = 1, bestScore = -1;
-    const totalItems = categories.reduce((s, c) => s + c, 0);
+    const totalItems = catData.reduce((s, c) => s + c.count, 0);
+    const totalSide2 = catData.reduce((s, c) => s + c.side2, 0);
+    const totalSingle = totalItems - totalSide2;
 
-    for (let cols = 1; cols <= totalItems; cols++) {
-      const rows = categories.reduce((s, c) => s + Math.ceil(c / cols), 0);
-      const rowGaps = (rows - categories.length) * TILE_GAP;
+    // side-2 tiles span 2 columns so consume 2 slots each
+    const catRows = (c, cols) => Math.ceil((c.side2 * 2 + (c.count - c.side2)) / cols);
+
+    let bestCols = 1, bestScore = -1;
+
+    for (let cols = 1; cols <= totalItems * 2; cols++) {
+      const rows = catData.reduce((s, c) => s + catRows(c, cols), 0);
+      const rowGaps = (rows - catData.length) * TILE_GAP;
       const colGaps = (cols - 1) * TILE_GAP;
       const tileH = (availableH - catH - GRID_PAD - rowGaps - BUFFER) / rows;
       const tileW = (vW - GRID_PAD - colGaps) / cols;
       if (tileH <= 0 || tileW <= 0) continue;
-      const score = Math.min(0.9 * (tileW - 12), tileH - 44);
+
+      // side-2 tiles span 2 cols so each timer-container gets one col width
+      const singleScore = Math.min(0.9 * (tileW - 12), tileH - 58);
+      const side2Score  = Math.min(0.9 * (tileW - 10), tileH - 58);
+      const score = totalItems > 0
+        ? (totalSingle * singleScore + totalSide2 * side2Score) / totalItems
+        : singleScore;
+
       if (score > bestScore) { bestScore = score; bestCols = cols; }
     }
 
-    const totalRows = categories.reduce((s, c) => s + Math.ceil(c / bestCols), 0);
-    const rowGaps = (totalRows - categories.length) * TILE_GAP;
+    const totalRows = catData.reduce((s, c) => s + catRows(c, bestCols), 0);
+    const rowGaps = (totalRows - catData.length) * TILE_GAP;
     const tileH = Math.floor((availableH - catH - GRID_PAD - rowGaps - BUFFER) / totalRows);
 
     document.documentElement.style.setProperty('--grid-cols', String(bestCols));
