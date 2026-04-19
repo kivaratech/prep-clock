@@ -319,7 +319,7 @@ header {
 }
 
 .item-name {
-  font-size: clamp(0.6rem, 9cqi, 0.85rem);
+  font-size: clamp(0.7rem, 14cqi, 1.4rem);
   font-weight: 800;
   margin-bottom: 0;
   line-height: 1.1;
