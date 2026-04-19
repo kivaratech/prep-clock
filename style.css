@@ -168,6 +168,7 @@ header {
   margin-top: 2px;
   border-bottom: 1px solid var(--card-border);
   position: relative;
+  text-align: center;
 }
 
 .category-header::after {
