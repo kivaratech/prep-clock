@@ -375,7 +375,7 @@ function handleSideClick(side, durationMs) {
 }
 
 // --- Audio ---
-let activeAlerts = [];
+let activeAlertAudio = null;
 let testAlertAudio = null;
 
 async function preloadAudioFiles() {
@@ -421,36 +421,53 @@ function playAlert(alertKey, loopCount) {
   if (!soundPath) return;
 
   try {
-    const audio = new Audio(soundPath);
-    configureAudioLoop(audio, loopCount);
-
-    audio.play().catch((error) => {
-      if (error.name === 'NotAllowedError') {
-        document.addEventListener('click', () => {
-          const retryAudio = new Audio(soundPath);
-          configureAudioLoop(retryAudio, loopCount);
-          retryAudio.play().catch(() => {});
-          if (loopCount) testAlertAudio = retryAudio;
-          else activeAlerts.push(retryAudio);
-        }, { once: true });
-      }
-    });
-
     if (loopCount) {
+      // Test alert: always create fresh instance
       if (testAlertAudio) testAlertAudio.pause();
+      const audio = new Audio(soundPath);
+      configureAudioLoop(audio, loopCount);
+      audio.play().catch((error) => {
+        if (error.name === 'NotAllowedError') {
+          document.addEventListener('click', () => {
+            const retryAudio = new Audio(soundPath);
+            configureAudioLoop(retryAudio, loopCount);
+            retryAudio.play().catch(() => {});
+            testAlertAudio = retryAudio;
+          }, { once: true });
+        }
+      });
       testAlertAudio = audio;
     } else {
-      activeAlerts.push(audio);
+      // Timer expiry: restart existing alert instead of stacking
+      if (activeAlertAudio) {
+        activeAlertAudio.currentTime = 0;
+        return;
+      }
+      const audio = new Audio(soundPath);
+      configureAudioLoop(audio, loopCount);
+      audio.addEventListener('ended', () => { activeAlertAudio = null; });
+      audio.play().catch((error) => {
+        if (error.name === 'NotAllowedError') {
+          document.addEventListener('click', () => {
+            const retryAudio = new Audio(soundPath);
+            configureAudioLoop(retryAudio, loopCount);
+            retryAudio.addEventListener('ended', () => { activeAlertAudio = null; });
+            retryAudio.play().catch(() => {});
+            activeAlertAudio = retryAudio;
+          }, { once: true });
+        }
+      });
+      activeAlertAudio = audio;
     }
   } catch (e) {}
 }
 
 function stopAllAlerts() {
-  activeAlerts.forEach(audio => {
-    audio.pause();
-    audio.currentTime = 0;
-  });
-  activeAlerts = [];
+  if (activeAlertAudio) {
+    activeAlertAudio.pause();
+    activeAlertAudio.currentTime = 0;
+    activeAlertAudio = null;
+  }
 }
 
 // --- Admin ---
