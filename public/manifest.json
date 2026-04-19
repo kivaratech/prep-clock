@@ -1,6 +1,6 @@
 {
-  "name": "Shelf Life Timer",
-  "short_name": "TimerBoard",
+  "name": "Prep Clock",
+  "short_name": "Prep Clock",
   "description": "Offline-first shelf life timer board for Android tablet",
   "start_url": "/",
   "display": "standalone",
