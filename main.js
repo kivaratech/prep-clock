@@ -671,7 +671,16 @@ if (itemsUl) {
       item.name = e.target.querySelector('.edit-name').value;
       const hours = parseInt(e.target.querySelector('.edit-hours').value) || 0;
       const minutes = parseInt(e.target.querySelector('.edit-minutes').value) || 0;
-      item.duration = (hours * 60) + minutes;
+      const duration = (hours * 60) + minutes;
+      let errorEl = e.target.querySelector('.inline-duration-error');
+      if (!errorEl) {
+        errorEl = document.createElement('p');
+        errorEl.className = 'form-error inline-duration-error';
+        e.target.querySelector('.inline-form-actions').before(errorEl);
+      }
+      if (duration === 0) { errorEl.textContent = 'Duration must be greater than 0.'; return; }
+      errorEl.textContent = '';
+      item.duration = duration;
       item.category = e.target.querySelector('.edit-category').value;
       item.hasSide2 = item.category === 'Secondary Shelf Life' && e.target.querySelector('.edit-side2').checked;
       item.alert = e.target.querySelector('.edit-alert').value || null;
@@ -690,6 +699,12 @@ if (itemForm) {
     const hours = parseInt(document.getElementById('item-hours').value) || 0;
     const minutes = parseInt(document.getElementById('item-minutes').value) || 0;
     const duration = (hours * 60) + minutes;
+    const durationError = document.getElementById('duration-error');
+    if (duration === 0) {
+      durationError.classList.remove('hidden');
+      return;
+    }
+    durationError.classList.add('hidden');
     const category = document.getElementById('item-category').value;
     const hasSide2 = category === 'Secondary Shelf Life' && document.getElementById('item-has-side2').checked;
 
