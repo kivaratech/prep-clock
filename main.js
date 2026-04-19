@@ -274,12 +274,12 @@ let gridSortKey = '';
 
 function fitLayout() {
   requestAnimationFrame(() => {
-    const headerEl = document.querySelector('#app > header');
-    const catHeaderEls = grid ? grid.querySelectorAll('.category-header') : [];
+    if (!grid) return;
+    const catHeaderEls = grid.querySelectorAll('.category-header');
 
-    const vH = window.innerHeight;
+    // grid is flex:1 so clientHeight is exactly the space below the header
+    const availableH = grid.clientHeight;
     const vW = window.innerWidth;
-    const headerH = headerEl ? headerEl.offsetHeight : 48;
 
     let catH = 0;
     catHeaderEls.forEach(el => { catH += el.offsetHeight + 2; });
@@ -301,17 +301,16 @@ function fitLayout() {
       const rows = categories.reduce((s, c) => s + Math.ceil(c / cols), 0);
       const rowGaps = (rows - categories.length) * TILE_GAP;
       const colGaps = (cols - 1) * TILE_GAP;
-      const tileH = (vH - headerH - catH - GRID_PAD - rowGaps - BUFFER) / rows;
+      const tileH = (availableH - catH - GRID_PAD - rowGaps - BUFFER) / rows;
       const tileW = (vW - GRID_PAD - colGaps) / cols;
       if (tileH <= 0 || tileW <= 0) continue;
-      // Score = effective circle size (bounded by both tile width and height)
       const score = Math.min(0.9 * (tileW - 12), tileH - 44);
       if (score > bestScore) { bestScore = score; bestCols = cols; }
     }
 
     const totalRows = categories.reduce((s, c) => s + Math.ceil(c / bestCols), 0);
     const rowGaps = (totalRows - categories.length) * TILE_GAP;
-    const tileH = Math.floor((vH - headerH - catH - GRID_PAD - rowGaps - BUFFER) / totalRows);
+    const tileH = Math.floor((availableH - catH - GRID_PAD - rowGaps - BUFFER) / totalRows);
 
     document.documentElement.style.setProperty('--grid-cols', String(bestCols));
     document.documentElement.style.setProperty('--tile-height', `${tileH}px`);
@@ -716,6 +715,7 @@ setInterval(() => {
 renderGrid();
 
 window.addEventListener('resize', fitLayout);
+if (window.visualViewport) window.visualViewport.addEventListener('resize', fitLayout);
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js');
