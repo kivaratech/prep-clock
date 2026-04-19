@@ -226,6 +226,7 @@ header {
   width: 100%;
   flex: 1;
   min-height: 0;
+  overflow: hidden;
 }
 
 .timer-container {
@@ -242,6 +243,7 @@ header {
   flex: 1;
   min-width: 0;
   min-height: 0;
+  overflow: hidden;
 }
 
 .timer-container:hover {
@@ -263,8 +265,8 @@ header {
 .tile-visual {
   container-type: inline-size;
   position: relative;
-  width: min(90cqi, calc(var(--tile-height, 200px) - 44px));
-  height: min(90cqi, calc(var(--tile-height, 200px) - 44px));
+  width: min(90cqi, calc(var(--tile-height, 200px) - 58px));
+  height: min(90cqi, calc(var(--tile-height, 200px) - 58px));
   flex-shrink: 0;
 }
 
