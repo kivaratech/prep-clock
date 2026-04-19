@@ -134,7 +134,7 @@ header {
 }
 
 #clock-time {
-  font-size: 1rem;
+  font-size: 1.6rem;
   font-weight: 700;
   font-family: 'Courier New', monospace;
   color: var(--text-primary);
