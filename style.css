@@ -618,3 +618,10 @@ select {
   font-weight: 600;
   margin: 4px 0 0;
 }
+
+.form-success {
+  color: var(--primary-color);
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 4px 0 0;
+}

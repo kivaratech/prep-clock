@@ -724,6 +724,10 @@ if (itemForm) {
         side1: { remainingMs: duration * 60000, isRunning: false },
         side2: { remainingMs: duration * 60000, isRunning: false }
       });
+      const timerAdded = document.getElementById('timer-added');
+      timerAdded.classList.remove('hidden');
+      clearTimeout(timerAdded._hideTimeout);
+      timerAdded._hideTimeout = setTimeout(() => timerAdded.classList.add('hidden'), 3000);
     }
     saveState(); renderAdminItems(); renderGrid(); itemForm.reset();
     document.getElementById('edit-id').value = '';
