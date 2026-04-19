@@ -191,6 +191,10 @@ header {
   grid-column: span 2;
 }
 
+.has-any-side2 .tile:not(.has-side2) {
+  grid-column: span 2;
+}
+
 .tile {
   container-type: inline-size;
   background: var(--card-bg);

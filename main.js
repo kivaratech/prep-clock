@@ -301,8 +301,12 @@ function fitLayout() {
     const totalSide2 = catData.reduce((s, c) => s + c.side2, 0);
     const totalSingle = totalItems - totalSide2;
 
-    // side-2 tiles span 2 columns so consume 2 slots each
-    const catRows = (c, cols) => Math.ceil((c.side2 * 2 + (c.count - c.side2)) / cols);
+    // When any side-2 tile exists, single tiles also span 2 cols for proportional sizing
+    const allSpan2 = totalSide2 > 0;
+    const catRows = (c, cols) => {
+      if (allSpan2) return Math.ceil(c.count * 2 / cols);
+      return Math.ceil((c.side2 * 2 + (c.count - c.side2)) / cols);
+    };
 
     let bestCols = 1, bestScore = -1;
 
@@ -314,9 +318,11 @@ function fitLayout() {
       const tileW = (vW - GRID_PAD - colGaps) / cols;
       if (tileH <= 0 || tileW <= 0) continue;
 
-      // side-2 tiles span 2 cols so each timer-container gets one col width
-      const singleScore = Math.min(0.9 * (tileW - 12), tileH - 58);
-      const side2Score  = Math.min(0.9 * (tileW - 10), tileH - 58);
+      // single tiles span 2 cols when side-2 is active → full 2-col width for one timer
+      const singleScore = allSpan2
+        ? Math.min(0.9 * (2 * tileW + TILE_GAP - 12), tileH - 58)
+        : Math.min(0.9 * (tileW - 12), tileH - 58);
+      const side2Score = Math.min(0.9 * (tileW - 10), tileH - 58);
       const score = totalItems > 0
         ? (totalSingle * singleScore + totalSide2 * side2Score) / totalItems
         : singleScore;
@@ -337,6 +343,7 @@ function fitLayout() {
 function renderGrid() {
   if (!grid) return;
   gridSortKey = computeGridSortKey();
+  grid.classList.toggle('has-any-side2', state.items.some(i => i.hasSide2));
   grid.innerHTML = '';
 
   FIXED_CATEGORIES.forEach(cat => {
