@@ -128,6 +128,19 @@ header {
   margin-top: 0;
 }
 
+.header-clock {
+  display: flex;
+  align-items: center;
+}
+
+#clock-time {
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+  color: var(--text-primary);
+  letter-spacing: 0.03em;
+}
+
 #admin-toggle {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--card-border);

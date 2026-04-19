@@ -744,7 +744,21 @@ if (itemForm) {
   });
 }
 
+const clockEl = document.getElementById('clock-time');
+function updateClock() {
+  if (!clockEl) return;
+  const now = new Date();
+  const h = now.getHours();
+  const m = String(now.getMinutes()).padStart(2, '0');
+  const s = String(now.getSeconds()).padStart(2, '0');
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 || 12;
+  clockEl.textContent = `${h12}:${m}:${s} ${ampm}`;
+}
+updateClock();
+
 setInterval(() => {
+  updateClock();
   const anyExpired = tickState();
   const newSortKey = computeGridSortKey();
   if (anyExpired || newSortKey !== gridSortKey) {
