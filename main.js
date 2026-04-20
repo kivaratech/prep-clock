@@ -380,7 +380,8 @@ function renderGrid() {
           </div>`;
       };
 
-      tile.innerHTML = `<div class="timer-wrapper">${createTimerHtml(item.side1, 'Side 1')}${item.hasSide2 ? createTimerHtml(item.side2, 'Side 2') : ''}</div><div class="tile-info"><div class="item-name">${item.name.toUpperCase()}</div><div class="tap-hint">Tap timer to start/reset</div></div>`;
+      tile.innerHTML = `<div class="timer-wrapper">${createTimerHtml(item.side1, 'Side 1')}${item.hasSide2 ? createTimerHtml(item.side2, 'Side 2') : ''}</div><div class="tile-info"><div class="item-name"></div><div class="tap-hint">Tap timer to start/reset</div></div>`;
+      tile.querySelector('.item-name').textContent = item.name.toUpperCase();
 
       const timerContainers = tile.querySelectorAll('.timer-container');
       timerContainers[0].addEventListener('click', (e) => {
@@ -571,7 +572,7 @@ function renderAdminItems() {
 
     li.innerHTML = `
       <div class="admin-item-display">
-        <span>${item.name} (${h > 0 ? h + 'h ' : ''}${m}m) [${item.category}]</span>
+        <span class="item-display-name"></span>
         <div class="item-actions">
           <button class="btn-edit" data-id="${item.id}">Edit</button>
           <button class="btn-delete" data-id="${item.id}">Delete</button>
@@ -579,7 +580,7 @@ function renderAdminItems() {
       </div>
       <div class="inline-edit-form hidden" id="edit-form-${item.id}">
         <form class="inline-form">
-          <input type="text" class="edit-name" value="${item.name}" required />
+          <input type="text" class="edit-name" required />
           <div class="duration-inputs">
             <div class="input-group">
               <label>Hr</label>
@@ -608,6 +609,8 @@ function renderAdminItems() {
         </form>
       </div>
     `;
+    li.querySelector('.item-display-name').textContent = `${item.name} (${h > 0 ? h + 'h ' : ''}${m}m) [${item.category}]`;
+    li.querySelector('.edit-name').value = item.name;
     itemsUl.appendChild(li);
   });
 }
@@ -638,6 +641,7 @@ if (itemsUl) {
     const id = e.target.dataset.id;
     if (e.target.classList.contains('btn-delete')) {
       const item = state.items.find(i => i.id === id);
+      if (!item) return;
       if (confirm(`Are you sure you want to delete "${item.name}"?`)) {
         state.items = state.items.filter(item => item.id !== id);
         saveState();
@@ -652,11 +656,12 @@ if (itemsUl) {
         formContainer.classList.remove('hidden');
         const select = formContainer.querySelector('.edit-category');
         select.innerHTML = '';
+        const editedItem = state.items.find(i => i.id === id);
         state.categories.forEach(cat => {
           const opt = document.createElement('option');
           opt.value = cat;
           opt.textContent = cat;
-          if (cat === state.items.find(i => i.id === id).category) opt.selected = true;
+          if (editedItem && cat === editedItem.category) opt.selected = true;
           select.appendChild(opt);
         });
       }
@@ -675,6 +680,7 @@ if (itemsUl) {
       const li = e.target.closest('.admin-item-row');
       const id = li.dataset.id;
       const item = state.items.find(i => i.id === id);
+      if (!item) return;
       item.name = e.target.querySelector('.edit-name').value;
       const hours = parseInt(e.target.querySelector('.edit-hours').value) || 0;
       const minutes = parseInt(e.target.querySelector('.edit-minutes').value) || 0;
@@ -774,5 +780,23 @@ window.addEventListener('resize', fitLayout);
 if (window.visualViewport) window.visualViewport.addEventListener('resize', fitLayout);
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js');
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
+
+// Keep screen awake while app is visible
+if ('wakeLock' in navigator) {
+  let wakeLock = null;
+
+  const requestWakeLock = async () => {
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+    } catch (_) {}
+  };
+
+  // Re-acquire after tab becomes visible again (wake lock is released on hide)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') requestWakeLock();
+  });
+
+  requestWakeLock();
 }
