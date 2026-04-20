@@ -4,8 +4,8 @@
   "description": "Offline-first shelf life timer board for Android tablet",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#121212",
-  "theme_color": "#121212",
+  "background_color": "#0B1220",
+  "theme_color": "#0B1220",
   "scope": "/",
   "orientation": "portrait-primary",
   "icons": [
