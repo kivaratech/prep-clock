@@ -527,6 +527,7 @@ button:active { transform: scale(0.96); }
 
 .bulk-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 20px;
 }
@@ -536,6 +537,24 @@ button:active { transform: scale(0.96); }
   padding: 12px 20px;
   font-size: 0.875rem;
   flex: 1;
+}
+
+.btn-danger {
+  background: #7f1d1d;
+  color: #fca5a5;
+}
+
+.btn-danger:hover {
+  background: #991b1b;
+}
+
+.btn-success {
+  background: #14532d;
+  color: #86efac;
+}
+
+.btn-success:hover {
+  background: #166534;
 }
 
 .item-list ul { list-style: none; }

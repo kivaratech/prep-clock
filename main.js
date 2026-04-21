@@ -105,6 +105,8 @@ const themeSelect = document.getElementById('theme-select');
 const side2OptionWrapper = document.getElementById('side2-option-wrapper');
 const bulkSide2OnBtn = document.getElementById('btn-bulk-side2-on');
 const bulkSide2OffBtn = document.getElementById('btn-bulk-side2-off');
+const bulkResetBtn = document.getElementById('btn-bulk-reset');
+const bulkStartBtn = document.getElementById('btn-bulk-start');
 const defaultAlertSelect = document.getElementById('default-alert-select');
 const testAlertBtn = document.getElementById('test-alert-btn');
 
@@ -138,6 +140,34 @@ if (bulkSide2OffBtn) {
     if (confirm('Disable Side 2 for ALL Secondary Shelf Life items?')) {
       state.items.forEach(item => {
         if (item.category === 'Secondary Shelf Life') item.hasSide2 = false;
+      });
+      saveState(); renderGrid();
+      adminScreen.classList.add('hidden');
+    }
+  });
+}
+
+if (bulkStartBtn) {
+  bulkStartBtn.addEventListener('click', () => {
+    if (confirm('Start ALL timers?')) {
+      state.items.forEach(item => {
+        if (item.side1.remainingMs > 0) item.side1.isRunning = true;
+        if (item.hasSide2 && item.side2.remainingMs > 0) item.side2.isRunning = true;
+      });
+      saveState(); renderGrid();
+      adminScreen.classList.add('hidden');
+    }
+  });
+}
+
+if (bulkResetBtn) {
+  bulkResetBtn.addEventListener('click', () => {
+    if (confirm('Reset ALL timers to their full duration?')) {
+      stopAllAlerts();
+      state.items.forEach(item => {
+        const durationMs = item.duration * 60000;
+        item.side1 = { remainingMs: durationMs, isRunning: false };
+        item.side2 = { remainingMs: durationMs, isRunning: false };
       });
       saveState(); renderGrid();
       adminScreen.classList.add('hidden');
