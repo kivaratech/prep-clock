@@ -5,15 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Prep Clock</title>
     <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#0f172a" />
-    <link rel="stylesheet" href="/style.css" />
+    <meta name="theme-color" content="#0B1220" />
   </head>
   <body>
     <div id="app">
       <header>
         <div class="header-info">
           <h1>Prep Clock</h1>
-          <p>Tap a timer to start • Turns red at 5 min</p>
+          <p>Tap a timer to start • Turns yellow at 5 min</p>
         </div>
         <div class="header-clock">
           <span id="clock-time"></span>
@@ -43,9 +42,8 @@
           </section>
 
           <section class="item-editor">
-            <h3>Add/Edit Item</h3>
+            <h3>Add Item</h3>
             <form id="item-form">
-              <input type="hidden" id="edit-id" />
               <input type="text" id="item-name" placeholder="Item Name" required />
               <div class="duration-inputs">
                 <div class="input-group">

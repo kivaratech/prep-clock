@@ -1,4 +1,4 @@
-const CACHE_NAME = 'prep-clock-v3';
+const CACHE_NAME = 'prep-clock-v4';
 
 // Static assets in /public — known paths, no hashing, must all cache on install.
 // JS/CSS and Vite-transformed modules are caught by the runtime fetch handler below.
@@ -41,16 +41,33 @@ self.addEventListener('activate', (event) => {
 });
 
 // ── Fetch ─────────────────────────────────────────────────────────────────────
-// Cache-first for every same-origin GET request.
-//   • Return from cache immediately if present.
-//   • Otherwise fetch from network, store the response, then return it.
-//   • For navigation requests (HTML), if both cache and network fail, fall back
-//     to the cached root so the app shell still loads.
+// Navigations (HTML): network-first, so a manual reload while online always
+//   picks up the latest deploy with no CACHE_NAME bump needed; falls back to
+//   the cached shell when offline.
+// Everything else (hashed assets, audio, icons): cache-first.
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
   if (request.method !== 'GET' || url.origin !== self.location.origin) return;
+
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      caches.open(CACHE_NAME).then(async (cache) => {
+        try {
+          const response = await fetch(request);
+          if (response && response.status === 200) {
+            cache.put(request, response.clone());
+          }
+          return response;
+        } catch {
+          const cached = await cache.match(request) || await cache.match('/');
+          return cached || new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
+        }
+      })
+    );
+    return;
+  }
 
   event.respondWith(
     caches.open(CACHE_NAME).then(async (cache) => {
@@ -65,12 +82,6 @@ self.addEventListener('fetch', (event) => {
         }
         return response;
       } catch {
-        // Network failed — for navigation fall back to cached app shell
-        if (request.mode === 'navigate') {
-          const shell = await cache.match('/');
-          if (shell) return shell;
-        }
-        // For other asset types there's nothing we can do
         return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
       }
     })

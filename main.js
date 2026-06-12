@@ -42,7 +42,7 @@ try {
   state = null;
 }
 
-if (!state || !state.items || state.items.length === 0) {
+if (!state || !Array.isArray(state.items)) {
   state = {
     items: DEFAULT_ITEMS,
     categories: FIXED_CATEGORIES,
@@ -51,9 +51,10 @@ if (!state || !state.items || state.items.length === 0) {
   };
   localStorage.setItem('timer_state', JSON.stringify(state));
 } else {
-  // Handle background timer: calculate elapsed time and update running timers
+  // Handle background timer: calculate elapsed time and update running timers.
+  // Clamp at 0 in case the tablet clock jumped backward (NTP sync, DST).
   const lastSaveTime = state.lastSaveTime || Date.now();
-  const elapsedMs = Date.now() - lastSaveTime;
+  const elapsedMs = Math.max(0, Date.now() - lastSaveTime);
 
   state.categories = FIXED_CATEGORIES;
   if (state.warningThreshold === 15) state.warningThreshold = 5;
@@ -73,17 +74,22 @@ if (!state || !state.items || state.items.length === 0) {
     if (item.side2 === undefined) {
       item.side2 = { remainingMs: item.duration * 60000, isRunning: false };
     }
-    if (item.side1.isRunning) {
-      item.side1.remainingMs -= elapsedMs;
-      if (item.side1.remainingMs < 0) item.side1.remainingMs = 0;
-    }
-    if (item.side2 && item.side2.isRunning) {
-      item.side2.remainingMs -= elapsedMs;
-      if (item.side2.remainingMs < 0) item.side2.remainingMs = 0;
+    [item.side1, item.side2].forEach(side => {
+      if (side.isRunning) {
+        side.remainingMs -= elapsedMs;
+        if (side.remainingMs <= 0) {
+          side.remainingMs = 0;
+          side.isRunning = false;
+        }
+      }
+    });
+    // Clean up timers left running on a side that was later disabled
+    if (!item.hasSide2 && item.side2.isRunning) {
+      item.side2 = { remainingMs: item.duration * 60000, isRunning: false };
     }
     if (item.alert === undefined) item.alert = null;
   });
-  if (state.defaultAlert === undefined) state.defaultAlert = 'alert1';
+  if (!ALERTS[state.defaultAlert]) state.defaultAlert = 'alert1';
 }
 
 function saveState() {
@@ -139,7 +145,11 @@ if (bulkSide2OffBtn) {
   bulkSide2OffBtn.addEventListener('click', () => {
     if (confirm('Disable Side 2 for ALL Secondary Shelf Life items?')) {
       state.items.forEach(item => {
-        if (item.category === 'Secondary Shelf Life') item.hasSide2 = false;
+        if (item.category === 'Secondary Shelf Life' && item.hasSide2) {
+          item.hasSide2 = false;
+          // Stop the hidden timer so it can't keep running and alarm invisibly
+          item.side2 = { remainingMs: item.duration * 60000, isRunning: false };
+        }
       });
       saveState(); renderGrid();
       adminScreen.classList.add('hidden');
@@ -251,12 +261,14 @@ let lastUpdateTime = Date.now();
 // Advance timer state only — no DOM work
 function tickState() {
   const now = Date.now();
-  const delta = now - lastUpdateTime;
+  // Clamp at 0 in case the tablet clock jumped backward (NTP sync, DST)
+  const delta = Math.max(0, now - lastUpdateTime);
   lastUpdateTime = now;
 
   let anyExpired = false;
   state.items.forEach(item => {
-    [item.side1, item.side2].forEach(side => {
+    const sides = item.hasSide2 ? [item.side1, item.side2] : [item.side1];
+    sides.forEach(side => {
       if (side.isRunning && side.remainingMs > 0) {
         side.remainingMs -= delta;
         if (side.remainingMs <= 0) {
@@ -393,7 +405,7 @@ function renderGrid() {
 
       const createTimerHtml = (side, label) => {
         const stateClass = getSideStateClass(side, durationMs);
-        const progress = Math.max(0, (side.remainingMs / durationMs) * 100);
+        const progress = Math.min(100, Math.max(0, (side.remainingMs / durationMs) * 100));
         const timeData = formatTime(side.remainingMs);
         const statusText = getSideStatusText(side, durationMs);
         return `
@@ -453,7 +465,7 @@ function updateDisplays() {
 function updateSideDisplay(container, side, durationMs) {
   container.className = `timer-container ${getSideStateClass(side, durationMs)}`;
 
-  const progress = Math.max(0, (side.remainingMs / durationMs) * 100);
+  const progress = Math.min(100, Math.max(0, (side.remainingMs / durationMs) * 100));
   container.querySelector('circle.progress').style.strokeDashoffset = 283 - (progress * 2.83);
 
   const timeData = formatTime(side.remainingMs);
@@ -697,9 +709,13 @@ if (itemsUl) {
       }
     } else if (e.target.classList.contains('btn-cancel')) {
       e.target.closest('.inline-edit-form').classList.add('hidden');
-    } else if (e.target.classList.contains('edit-category')) {
-      const itemId = e.target.dataset.itemId;
-      const wrapper = document.getElementById(`edit-side2-wrapper-${itemId}`);
+    }
+  });
+
+  // Selects fire 'change', not 'click' — especially with Android's native picker
+  itemsUl.addEventListener('change', (e) => {
+    if (e.target.classList.contains('edit-category')) {
+      const wrapper = document.getElementById(`edit-side2-wrapper-${e.target.dataset.itemId}`);
       updateSide2Visibility(e.target.value, wrapper);
     }
   });
@@ -711,7 +727,6 @@ if (itemsUl) {
       const id = li.dataset.id;
       const item = state.items.find(i => i.id === id);
       if (!item) return;
-      item.name = e.target.querySelector('.edit-name').value;
       const hours = parseInt(e.target.querySelector('.edit-hours').value) || 0;
       const minutes = parseInt(e.target.querySelector('.edit-minutes').value) || 0;
       const duration = (hours * 60) + minutes;
@@ -723,12 +738,18 @@ if (itemsUl) {
       }
       if (duration === 0) { errorEl.textContent = 'Duration must be greater than 0.'; return; }
       errorEl.textContent = '';
+      item.name = e.target.querySelector('.edit-name').value;
       item.duration = duration;
       item.category = e.target.querySelector('.edit-category').value;
       item.hasSide2 = item.category === 'Secondary Shelf Life' && e.target.querySelector('.edit-side2').checked;
       item.alert = e.target.querySelector('.edit-alert').value || null;
-      if (!item.side1.isRunning) item.side1.remainingMs = item.duration * 60000;
-      if (!item.side2.isRunning) item.side2.remainingMs = item.duration * 60000;
+      if (!item.side1.isRunning) item.side1.remainingMs = duration * 60000;
+      if (item.hasSide2) {
+        if (!item.side2.isRunning) item.side2.remainingMs = duration * 60000;
+      } else {
+        // Stop the hidden timer so it can't keep running and alarm invisibly
+        item.side2 = { remainingMs: duration * 60000, isRunning: false };
+      }
       saveState(); renderAdminItems(); renderGrid();
     }
   });
@@ -737,7 +758,6 @@ if (itemsUl) {
 if (itemForm) {
   itemForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    const id = document.getElementById('edit-id').value;
     const name = document.getElementById('item-name').value;
     const hours = parseInt(document.getElementById('item-hours').value) || 0;
     const minutes = parseInt(document.getElementById('item-minutes').value) || 0;
@@ -751,29 +771,16 @@ if (itemForm) {
     const category = document.getElementById('item-category').value;
     const hasSide2 = category === 'Secondary Shelf Life' && document.getElementById('item-has-side2').checked;
 
-    if (id) {
-      const item = state.items.find(item => item.id === id);
-      if (item) {
-        item.name = name;
-        item.duration = duration;
-        item.hasSide2 = hasSide2;
-        item.category = category;
-        if (!item.side1.isRunning) item.side1.remainingMs = duration * 60000;
-        if (!item.side2.isRunning) item.side2.remainingMs = duration * 60000;
-      }
-    } else {
-      state.items.push({
-        id: nanoid(), name, duration, hasSide2, category, alert: null,
-        side1: { remainingMs: duration * 60000, isRunning: false },
-        side2: { remainingMs: duration * 60000, isRunning: false }
-      });
-      const timerAdded = document.getElementById('timer-added');
-      timerAdded.classList.remove('hidden');
-      clearTimeout(timerAdded._hideTimeout);
-      timerAdded._hideTimeout = setTimeout(() => timerAdded.classList.add('hidden'), 3000);
-    }
+    state.items.push({
+      id: nanoid(), name, duration, hasSide2, category, alert: null,
+      side1: { remainingMs: duration * 60000, isRunning: false },
+      side2: { remainingMs: duration * 60000, isRunning: false }
+    });
+    const timerAdded = document.getElementById('timer-added');
+    timerAdded.classList.remove('hidden');
+    clearTimeout(timerAdded._hideTimeout);
+    timerAdded._hideTimeout = setTimeout(() => timerAdded.classList.add('hidden'), 3000);
     saveState(); renderAdminItems(); renderGrid(); itemForm.reset();
-    document.getElementById('edit-id').value = '';
     document.getElementById('item-minutes').value = '0';
     document.getElementById('item-hours').value = '0';
     updateSide2Visibility(categorySelect.value, side2OptionWrapper);
@@ -810,7 +817,14 @@ window.addEventListener('resize', fitLayout);
 if (window.visualViewport) window.visualViewport.addEventListener('resize', fitLayout);
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').catch(() => {});
+  if (import.meta.env.PROD) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  } else {
+    // Dev: a previously installed SW would serve stale cached modules
+    navigator.serviceWorker.getRegistrations()
+      .then((regs) => regs.forEach((r) => r.unregister()))
+      .catch(() => {});
+  }
 }
 
 // Keep screen awake while app is visible
